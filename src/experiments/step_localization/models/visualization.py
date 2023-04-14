@@ -3,10 +3,9 @@ import io
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from PIL import Image
-
 from dp.exact_dp import drop_dtw
 from models.losses import compute_all_costs
+from PIL import Image
 
 color_code = [
     "blue",

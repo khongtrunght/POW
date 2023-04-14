@@ -11,12 +11,12 @@ import torch
 from tqdm import tqdm
 
 from config.config import logger
-from src.data.unique_data_module import UniqueDataModule
-from src.dp.dp_utils import compute_all_costs
-from src.dp.exact_dp import NW, drop_dtw, dtw, lcss, otam
-from src.metrics import IoU, framewise_accuracy
-from src.models.model_utils import load_last_checkpoint
-from src.models.nets import EmbeddingsMapping
+from src.experiments.step_localization.data.unique_data_module import UniqueDataModule
+from src.experiments.step_localization.dp.dp_utils import compute_all_costs
+from src.experiments.step_localization.dp.exact_dp import NW, drop_dtw, dtw, lcss, otam
+from src.experiments.step_localization.metrics import IoU, framewise_accuracy
+from src.experiments.step_localization.models.model_utils import load_last_checkpoint
+from src.experiments.step_localization.models.nets import EmbeddingsMapping
 from src.pow.pow import get_assignment, pow_cost
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
@@ -129,8 +129,7 @@ def compute_all_metrics(dataset, model, gamma, config):
     return accuracy_std * 100, iou_std * 100, accuracy_dtw * 100, iou_dtw * 100
 
 
-if __name__ == "__main__":
-    # import wandb
+def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", type=str, default="COIN", help="dataset")
     parser.add_argument(
@@ -163,6 +162,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("--reg", type=float, default=0.1, help="reg")
     args = parser.parse_args()
+    return args
+
+
+def main(args):
     logger.info("Args: {}".format(args))
     logger.info("Algorithm use: {}".format(args.algorithm))
     # wandb.init(project="sequence-localization", entity="sequence-learning", config=args)
@@ -195,5 +198,12 @@ if __name__ == "__main__":
 
     logger.info(f"{args.algorithm} accuracy : {accuracy_dtw:.1f}%")
     logger.info(f"{args.algorithm} IoU : {iou_dtw:.1f}%")
+
+
+if __name__ == "__main__":
+    # import wandb
+
+    args = parse_args()
+    main(args)
     # wandb.run.summary["accuracy"] = accuracy_dtw
     # wandb.run.summary["iou"] = iou_dtw

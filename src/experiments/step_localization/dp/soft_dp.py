@@ -1,10 +1,9 @@
 import math
 
 import torch
-from torch import log
-
 from dp.dp_utils import VarTable, minGamma, minProb
 from models.model_utils import cosine_sim, unique_softmax
+from torch import log
 
 device = "cuda" if torch.cuda.is_available() else "cpu"
 

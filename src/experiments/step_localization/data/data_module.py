@@ -4,9 +4,12 @@ import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
 from config.config import COIN_PATH, CT_PATH, YC_PATH, logger
-from src.data.batching import BatchIdxSampler_Class, flatten_batch
-from src.data.data_utils import dict2tensor
-from src.data.loader import LMDB_Folder_Dataset
+from src.experiments.step_localization.data.batching import (
+    BatchIdxSampler_Class,
+    flatten_batch,
+)
+from src.experiments.step_localization.data.data_utils import dict2tensor
+from src.experiments.step_localization.data.loader import LMDB_Folder_Dataset
 
 
 class DataModule(pl.LightningDataModule):

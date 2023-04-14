@@ -3,7 +3,7 @@ import numpy as np
 from copy import deepcopy
 import torch
 
-from src.data.unique_data_module import Unique_LMDB_Class_Dataset
+from src.experiments.step_localization.data.unique_data_module import Unique_LMDB_Class_Dataset
 
 def test_add_gt_assignment_true(sample):
     before = deepcopy(sample)

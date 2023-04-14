@@ -1,5 +1,5 @@
 import pytest
-from src.metrics import framewise_accuracy, IoU
+from src.experiments.step_localization.metrics import framewise_accuracy, IoU
 import numpy as np
 import torch
 
