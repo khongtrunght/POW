@@ -1,10 +1,10 @@
 matplotlib==3.6.2
 numpy==1.21.5
-pickle5==0.0.12
 Pillow==9.5.0
-POT==0.8.3.dev0
+POT @ git+https://github.com/khongtrunght/POT.git@8af0640231371d3d5a5582c00f2388da9d891096
 pyarrow==10.0.1
 pytest==7.3.0
 pytorch_lightning==1.1.8
 torch==2.0.0
 tqdm==4.65.0
+lmdb==1.4.0

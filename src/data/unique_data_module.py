@@ -6,9 +6,9 @@ import numpy as np
 import pytorch_lightning as pl
 import torch
 
+from config.config import COIN_PATH, CT_PATH, YC_PATH, logger
 from src.data.data_utils import dict2tensor
 from src.data.loader import LMDB_Class_Dataset, LMDB_Folder_Dataset
-from src.utils.paths import COIN_PATH, CT_PATH, YC_PATH
 
 from .data_module import DataModule
 
@@ -86,4 +86,5 @@ class UniqueDataModule(DataModule):
         self.test_dataset = Unique_LMDB_Folder_Dataset(
             self.lmdb_path, split="test", transform=dict2tensor
         )
-        print(len(self.train_dataset), len(self.val_dataset))
+        logger.info(f"Train dataset size: {len(self.train_dataset)}")
+        logger.info(f"Val dataset size: {len(self.val_dataset)}")

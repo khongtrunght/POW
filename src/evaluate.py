@@ -4,13 +4,13 @@ from os import path as osp
 
 sys.path.append(osp.dirname(osp.dirname(osp.abspath(__file__))))
 import argparse
-import logging
 
 import numpy as np
 import ot
 import torch
 from tqdm import tqdm
 
+from config.config import logger
 from src.data.unique_data_module import UniqueDataModule
 from src.dp.dp_utils import compute_all_costs
 from src.dp.exact_dp import NW, drop_dtw, dtw, lcss, otam
@@ -18,13 +18,6 @@ from src.metrics import IoU, framewise_accuracy
 from src.models.model_utils import load_last_checkpoint
 from src.models.nets import EmbeddingsMapping
 from src.pow.pow import get_assignment, pow_cost
-
-logging.basicConfig(level=logging.INFO)
-
-import warnings
-
-warnings.simplefilter(action="ignore", category=FutureWarning)
-
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 FRAME_FEATURES = "frame_features"
@@ -97,12 +90,6 @@ def framewise_eval(dataset, model, *args, **kwargs):
         simple_assignment = np.argmax(sim, axis=0)
         simple_assignment[drop_costs < zx_costs.min(0)] = -1
 
-        # accuracy['simple'] += framewise_accuracy(
-        #         simple_assignment, sample, use_unlabeled=config.use_unlabeled)
-        # accuracy['dp'] += framewise_accuracy(
-        #     optimal_assignment, sample, use_unlabeled=config.use_unlabeled)
-        # iou['simple'] += IoU(simple_assignment, sample)
-        # iou['dp'] += IoU(optimal_assignment, sample)
         accuracy["simple"] += framewise_accuracy(
             frame_assignment=simple_assignment,
             gt_assignment=sample["gt_assignment"],
@@ -176,8 +163,8 @@ if __name__ == "__main__":
     )
     parser.add_argument("--reg", type=float, default=0.1, help="reg")
     args = parser.parse_args()
-    print(args)
-    logging.info("Algorithm use: {}".format(args.algorithm))
+    logger.info("Args: {}".format(args))
+    logger.info("Algorithm use: {}".format(args.algorithm))
     # wandb.init(project="sequence-localization", entity="sequence-learning", config=args)
     # wandb.run.summary["method"] = args.algorithm
     # wandb.run.name = wandb.run.summary["method"] + "_" + args.dataset + "_" + f"l1_{args.lambda1}_l2_{args.lambda2}_d_{args.delta}_m_{args.m}"
@@ -206,7 +193,7 @@ if __name__ == "__main__":
         dataset=dataset, model=model, gamma=gamma, config=args
     )
 
-    print(f"{args.algorithm} accuracy : {accuracy_dtw:.1f}%")
-    print(f"{args.algorithm} IoU : {iou_dtw:.1f}%")
+    logger.info(f"{args.algorithm} accuracy : {accuracy_dtw:.1f}%")
+    logger.info(f"{args.algorithm} IoU : {iou_dtw:.1f}%")
     # wandb.run.summary["accuracy"] = accuracy_dtw
     # wandb.run.summary["iou"] = iou_dtw

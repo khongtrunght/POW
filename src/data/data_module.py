@@ -3,10 +3,10 @@ import os
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader
 
+from config.config import COIN_PATH, CT_PATH, YC_PATH, logger
 from src.data.batching import BatchIdxSampler_Class, flatten_batch
 from src.data.data_utils import dict2tensor
 from src.data.loader import LMDB_Folder_Dataset
-from src.utils.paths import COIN_PATH, CT_PATH, YC_PATH
 
 
 class DataModule(pl.LightningDataModule):
@@ -34,7 +34,8 @@ class DataModule(pl.LightningDataModule):
         self.test_dataset = LMDB_Folder_Dataset(
             self.lmdb_path, split="test", transform=dict2tensor
         )
-        print(len(self.train_dataset), len(self.val_dataset))
+        logger.info(f"Train dataset size: {len(self.train_dataset)}")
+        logger.info(f"Val dataset size: {len(self.val_dataset)}")
 
     def train_dataloader(self):
         batch_idx_sampler = BatchIdxSampler_Class(

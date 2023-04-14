@@ -5,7 +5,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 
-from src.utils.paths import WEIGHTS_PATH
+from config.config import WEIGHTS_PATH
 
 
 def cosine_sim(x, z):
