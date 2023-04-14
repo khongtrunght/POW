@@ -17,7 +17,7 @@ from src.experiments.step_localization.data.unique_data_module import UniqueData
 from src.experiments.step_localization.metrics import IoU, framewise_accuracy
 from src.experiments.step_localization.models.model_utils import load_last_checkpoint
 from src.experiments.step_localization.models.nets import EmbeddingsMapping
-from src.pow.pow import get_assignment, pow_cost
+from src.pow.pow import get_assignment, pow_dst_matrix_and_margin
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 FRAME_FEATURES = "frame_features"
@@ -29,7 +29,7 @@ def align_pow(normal_size_features, drop_side_features, reg, m):
     M = 1 - normal_size_features @ drop_side_features.T
     # convert dtype to torch.float32
     M = M.type(torch.DoubleTensor)
-    M, a, b = pow_cost(M=M, reg=reg, m=m)
+    M, a, b = pow_dst_matrix_and_margin(M=M, reg=reg, m=m)
     soft_assignment = ot.emd(a, b, M)
     optimal_assignment = get_assignment(soft_assignment)
     return optimal_assignment

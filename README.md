@@ -24,3 +24,12 @@ python src/evaluate.py --algorithm=POW --keep_percentile 0.3 --reg 3 --use_unlab
 ```
 
 Read src/evaluate.py for more details.
+
+* Weizmann classification 1-nn experiments
+
+Example :
+```bash
+python -m src.experiments.weizmann.knn_eval --test_size 0.5 --outlier_ratio 0.1 --metric pow  --m 0.9 --reg 1 --distance euclidean
+```
+
+Read src/experiments/weizmann/knn_eval.py for more details.

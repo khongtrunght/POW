@@ -1,6 +1,6 @@
 import numpy as np
 
-from src.dp.dp_utils import compute_all_costs, traceback
+from src.dp.dp_utils import traceback
 
 
 def drop_dtw(
@@ -505,15 +505,16 @@ def crosstask_dp(cost_matrix, exactly_one=True, bg_cost=0):
     return labels
 
 
-def drop_dtw_cost(X, X_noise, keep_percentile, distance):
+def drop_dtw_distance(M, keep_percentile):
     """Compute cost between two sequences using Drop-DTW"""
-    xy_costs, noise_drop_costs, _ = compute_all_costs(
-        normal_size_features=X,
-        drop_side_features=X_noise,
-        gamma_xz=1,
-        keep_percentile=keep_percentile,
-        l2_normalize=False,
-        distance=distance,
-    )
-    result = drop_dtw(xy_costs, noise_drop_costs)
+    # drop_cost = torch.percentile(M, keep_percentile * 100)
+    # return cost, torch.repeat_interleave(drop_cost, cost.shape[1]), None
+    drop_cost = np.percentile(M, keep_percentile * 100)
+    noise_drop_costs = np.repeat(drop_cost, M.shape[1])
+    result = drop_dtw(M, noise_drop_costs)
     return result[0]
+
+
+def dtw_distance(M):
+    matrix, _ = dtw(M)
+    return matrix[-1, -1]

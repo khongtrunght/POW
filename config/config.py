@@ -17,6 +17,7 @@ COIN_PATH = Path(DATA_DIR, "COIN")
 LOGS_DIR = Path(BASE_DIR, "logs")
 YC_PATH, CT_PATH = None, None
 WEIGHTS_PATH = Path(BASE_DIR, "weights")
+WEI_PATH = Path(DATA_DIR, "wei")
 
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
 

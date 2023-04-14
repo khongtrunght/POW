@@ -69,12 +69,13 @@ def compute_all_costs(
         drop_costs = -torch.log(drop_probs + 1e-5)
 
         return zx_costs, drop_costs, drop_probs
-    elif distance == "l1":
-        cost = ot.dist(drop_side_features, normal_size_features, metric="euclidean")
+    else:
+        try:
+            cost = ot.dist(drop_side_features, normal_size_features, metric=distance)
+        except Exception as e:
+            raise e
         drop_cost = torch.percentile(cost, keep_percentile * 100)
         return cost, torch.repeat_interleave(drop_cost, cost.shape[1]), None
-    else:
-        raise NotImplementedError("Distance {} not implemented".format(distance))
 
 
 class VarTable:

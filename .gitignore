@@ -160,4 +160,5 @@ cython_debug/
 #.idea/
 
 Datasets/COIN/lmdb
+Datasets/wei
 **/test.ipynb

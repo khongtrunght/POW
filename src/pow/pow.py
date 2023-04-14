@@ -1,4 +1,5 @@
 import numpy as np
+import ot
 import torch
 
 
@@ -32,8 +33,10 @@ def partial_extend(normal_side, drop_side, M, m=None, nb_dummies=1):
     return a_extended, drop_side, D_extended
 
 
-def pow_cost(M, reg, m):
+def pow_dst_matrix_and_margin(M, reg, m):
     rows, cols = M.shape
+    if type(M) == np.ndarray:
+        M = torch.from_numpy(M)
     a = torch.ones(rows, dtype=M.dtype, device=M.device) / rows
     b = torch.ones(cols, dtype=M.dtype, device=M.device) / cols
 
@@ -50,3 +53,8 @@ def get_assignment(soft_assignment):
     outlier_label = soft_assignment.shape[0] - 1
     assignment[assignment == outlier_label] = -1
     return assignment
+
+
+def pow_distance(M, reg, m):
+    M, a, b = pow_dst_matrix_and_margin(M, reg, m)
+    return ot.emd2(a, b, M)

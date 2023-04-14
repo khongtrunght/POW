@@ -1,6 +1,6 @@
 import torch
 import numpy as np
-from src.pow.pow import pow_regularization, pow_cost
+from src.pow.pow import pow_regularization, pow_dst_matrix_and_margin
 import pytest
 
 
@@ -65,7 +65,7 @@ def test_pow_regularization_new(M, reg):
 
 def test_pow_cost(M, reg, m):
     M_old, a_old, b_old = compute_OPW_costs(M, reg, m)
-    M_new, a_new, b_new = pow_cost(M, reg, m)
+    M_new, a_new, b_new = pow_dst_matrix_and_margin(M, reg, m)
 
     assert np.allclose(M_old, M_new.detach().numpy())
     assert np.allclose(a_old, a_new.detach().numpy())
