@@ -160,3 +160,4 @@ cython_debug/
 #.idea/
 
 Datasets/COIN/lmdb
+notebooks/
