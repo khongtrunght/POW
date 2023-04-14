@@ -9,6 +9,23 @@ from torch import exp, log
 device = "cuda" if torch.cuda.is_available() else "cpu"
 
 
+def unique_softmax(sim, labels, gamma=1, dim=0):
+    assert sim.shape[0] == labels.shape[0]
+    labels = labels.detach().cpu().numpy()
+    unique_labels, unique_index, unique_inverse_index = np.unique(
+        labels, return_index=True, return_inverse=True
+    )
+    unique_sim = sim[unique_index]
+    unique_softmax_sim = torch.nn.functional.softmax(unique_sim / gamma, dim=dim)
+    softmax_sim = unique_softmax_sim[unique_inverse_index]
+    return softmax_sim
+
+
+def cosine_sim(x, z):
+    cos_sim_fn = torch.nn.CosineSimilarity(dim=1)
+    return cos_sim_fn(x[..., None], z.T[None, ...])
+
+
 def compute_all_costs(
     normal_size_features,
     drop_side_features,

@@ -1,5 +1,6 @@
 import numpy as np
-from dp.dp_utils import compute_all_costs, traceback
+
+from src.dp.dp_utils import compute_all_costs, traceback
 
 
 def drop_dtw(

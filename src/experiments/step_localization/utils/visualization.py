@@ -2,13 +2,14 @@ import io
 
 import matplotlib.pyplot as plt
 import numpy as np
+import seaborn as sns
 import torch
-from models.losses import compute_all_costs
 from PIL import Image
 
 from src.dp.exact_dp import drop_dtw
+from src.experiments.step_localization.models.losses import compute_all_costs
 
-color_code = [
+COLOR_CODE = [
     "blue",
     "orange",
     "green",
@@ -21,13 +22,16 @@ color_code = [
     "cyan",
     "lime",
 ]
-shape_code = ["o", "s", "P", "*", "h", ">", "X", "d", "D", "v", "<"]
-color_code, shape_code = (
-    color_code * 3,
-    shape_code * 3,
+SHAPE_CODE = ["o", "s", "P", "*", "h", ">", "X", "d", "D", "v", "<"]
+COLOR_CODE, SHAPE_CODE = (
+    COLOR_CODE * 3,
+    SHAPE_CODE * 3,
 )  # to protect against long step sequences
-color_code = color_code + ["black"]
-shape_code = shape_code + ["p"]
+COLOR_CODE = COLOR_CODE + ["black"]
+SHAPE_CODE = SHAPE_CODE + ["p"]
+
+FRAME_FEATURES = "frame_features"
+STEP_FEATURES = "step_features"
 
 
 def visualize_drop_dtw_matching(
@@ -45,15 +49,16 @@ def visualize_drop_dtw_matching(
     for i, (sample_name, sample) in enumerate(samples.items()):
         ax = plt.subplot(len(samples), 1, i + 1)
         ax.set_title(f"{sample_name}: drop-dtw matching, gamma {gamma_f[i]}")
-        sample["frame_features"]
-        sample["step_features"]
+        frame_features = sample[FRAME_FEATURES]
+        step_features = sample[STEP_FEATURES]
 
         zx_costs, drop_costs, _ = compute_all_costs(
-            sample,
-            distractor,
-            gamma_f[i],
-            drop_cost_type=drop_cost,
+            normal_size_features=step_features,
+            drop_side_features=frame_features,
+            gamma_xz=gamma_f[i],
             keep_percentile=keep_percentile,
+            l2_normalize=False,
+            distance=drop_cost,
         )
         zx_costs, drop_costs = [
             t.detach().cpu().numpy() for t in [zx_costs, drop_costs]
@@ -73,8 +78,8 @@ def visualize_drop_dtw_matching(
                 if (i >= start.item()) and (i <= end.item()):
                     gt_labels[i] = sample_id.item()
         unique_labels = np.unique(sample["step_ids"].numpy())
-        step_colors = dict(zip(unique_labels, color_code))
-        step_shapes = dict(zip(unique_labels, shape_code))
+        step_colors = dict(zip(unique_labels, COLOR_CODE))
+        step_shapes = dict(zip(unique_labels, SHAPE_CODE))
 
         tick_freq = 20 if len(frame_labels) > 100 else 10
         plt.xticks(np.arange(0, len(frame_labels) * 3.2, tick_freq))
@@ -115,7 +120,7 @@ def visualize_step_strength(
         if step_id.item() not in unique_step_ids:
             unique_step_ids.append(step_id.item())
             unique_step_mask[si] = True
-    step_colors = dict(zip(np.sort(unique_step_ids), color_code))
+    step_colors = dict(zip(np.sort(unique_step_ids), COLOR_CODE))
 
     plt.rcParams["figure.figsize"] = (shape[0], shape[1] * len(samples))
     for i, (sample_name, sample) in enumerate(samples.items()):
@@ -155,7 +160,7 @@ def visualize_step_strength(
                 (frame_features @ distractor / gamma_f[i]).detach().cpu().numpy()
             )
             plt.plot(
-                np.arange(N_frames) * 3.2, distractor_activations, color=color_code[-1]
+                np.arange(N_frames) * 3.2, distractor_activations, color=COLOR_CODE[-1]
             )
         if drop_cost == "logit" and i == 0:
             sim_vec = descr_clip_similarity.reshape([-1])
@@ -163,7 +168,7 @@ def visualize_step_strength(
             baseline_logit = np.sort(sim_vec)[-k]
 
             drop_threshold = np.ones(N_frames) * baseline_logit
-            plt.plot(np.arange(N_frames) * 3.2, drop_threshold, color=color_code[-1])
+            plt.plot(np.arange(N_frames) * 3.2, drop_threshold, color=COLOR_CODE[-1])
 
     buf = io.BytesIO()
     plt.savefig(buf, format="png")
@@ -171,3 +176,18 @@ def visualize_step_strength(
     buf.seek(0)
     img = np.array(Image.open(buf).convert("RGB"))
     return img
+
+
+def visualize_assignment(num_unique_step, assignment, num_frames, title):
+    if torch.is_tensor(assignment):
+        assignment = assignment.detach().cpu().numpy()
+    assignment = assignment.astype(int)
+    assignment = assignment.copy()
+    new_matrix = np.zeros((num_unique_step + 1, num_frames))
+    assignment[assignment == -1] = num_unique_step
+    for i, value in enumerate(assignment):
+        new_matrix[value, i] = 1
+    plt.figure(figsize=(5, 5))
+    plt.title(title)
+    sns.heatmap(new_matrix, cmap="Blues")
+    plt.show()

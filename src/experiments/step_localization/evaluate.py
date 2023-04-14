@@ -11,9 +11,9 @@ import torch
 from tqdm import tqdm
 
 from config.config import logger
+from src.dp.dp_utils import compute_all_costs
+from src.dp.exact_dp import NW, drop_dtw, dtw, lcss, otam
 from src.experiments.step_localization.data.unique_data_module import UniqueDataModule
-from src.experiments.step_localization.dp.dp_utils import compute_all_costs
-from src.experiments.step_localization.dp.exact_dp import NW, drop_dtw, dtw, lcss, otam
 from src.experiments.step_localization.metrics import IoU, framewise_accuracy
 from src.experiments.step_localization.models.model_utils import load_last_checkpoint
 from src.experiments.step_localization.models.nets import EmbeddingsMapping
@@ -25,6 +25,96 @@ STEP_FEATURES = "unique_step_features"
 NUM_STEPS = "num_steps"
 
 
+def align_pow(normal_size_features, drop_side_features, reg, m):
+    M = 1 - normal_size_features @ drop_side_features.T
+    # convert dtype to torch.float32
+    M = M.type(torch.DoubleTensor)
+    M, a, b = pow_cost(M=M, reg=reg, m=m)
+    soft_assignment = ot.emd(a, b, M)
+    optimal_assignment = get_assignment(soft_assignment)
+    return optimal_assignment
+
+
+def align_drop_nw_lcss(zx_costs, drop_costs, algorithm):
+    dp_fn_dict = {"DropDTW": drop_dtw, "NW": NW, "LCSS": lcss}
+    dp_fn = dp_fn_dict[algorithm]
+    optimal_assignment = dp_fn(zx_costs, drop_costs, return_labels=True) - 1
+    return optimal_assignment
+
+
+def align_otam(sim):
+    _, path = otam(-sim)
+    optimal_assignment = np.zeros(sim.shape[1]) - 1
+    optimal_assignment[path[1]] = path[0]
+    return optimal_assignment
+
+
+def align_dtw(sim):
+    _, path = dtw(-sim)
+    _, uix = np.unique(path[1], return_index=True)
+    optimal_assignment = path[0][uix]
+    return optimal_assignment
+
+
+def get_optimal_simple_assignment(model, sample, config):
+    step_features = sample[STEP_FEATURES]
+    frame_features = sample[FRAME_FEATURES]
+    sim = step_features @ frame_features.T
+    sim = sim.detach().cpu().numpy()
+    if config.drop_cost == "learn":
+        model.compute_distractors(step_features.mean(0).to(DEVICE)).detach().cpu()
+    else:
+        pass
+
+    zx_costs, drop_costs, _ = compute_all_costs(
+        normal_size_features=step_features,
+        drop_side_features=frame_features,
+        gamma_xz=config.gamma_xz,
+        keep_percentile=config.keep_percentile,
+        l2_normalize=False,
+        distance=config.distance,
+    )
+
+    zx_costs, drop_costs = map(
+        lambda x: x.detach().cpu().numpy(), [zx_costs, drop_costs]
+    )
+
+    if config.algorithm == "POW":
+        optimal_assignment = align_pow(
+            normal_size_features=step_features,
+            drop_side_features=frame_features,
+            reg=config.reg,
+            m=config.keep_percentile,
+        )
+
+    elif config.algorithm in ["DropDTW", "NW", "LCSS"]:
+        optimal_assignment = align_drop_nw_lcss(
+            zx_costs=zx_costs, drop_costs=drop_costs, algorithm=config.algorithm
+        )
+
+    elif config.algorithm == "OTAM":
+        optimal_assignment = align_otam(sim)
+    else:
+        optimal_assignment = align_dtw(sim)
+
+    simple_assignment = np.argmax(sim, axis=0)
+    simple_assignment[drop_costs < zx_costs.min(0)] = -1
+    return optimal_assignment, simple_assignment
+
+
+def prepare_sample(sample, model):
+    if model is not None:
+        frame_features = (
+            model.map_video(sample[FRAME_FEATURES].to(DEVICE)).detech().cpu()
+        )
+        step_features = model.map_video(sample[STEP_FEATURES].to(DEVICE)).detech().cpu()
+    else:
+        frame_features = sample[FRAME_FEATURES].cpu()
+        step_features = sample[STEP_FEATURES].cpu()
+    sample[FRAME_FEATURES] = frame_features
+    sample[STEP_FEATURES] = step_features
+
+
 def framewise_eval(dataset, model, *args, **kwargs):
     accuracy = {"dp": 0, "simple": 0}
     iou = {"dp": 0, "simple": 0}
@@ -34,61 +124,13 @@ def framewise_eval(dataset, model, *args, **kwargs):
 
         config = kwargs.get("config", None)
 
-        if model is not None:
-            frame_features = (
-                model.map_video(sample[FRAME_FEATURES].to(DEVICE)).detech().cpu()
-            )
-            step_features = (
-                model.map_video(sample[STEP_FEATURES].to(DEVICE)).detech().cpu()
-            )
-        else:
-            frame_features = sample[FRAME_FEATURES].cpu()
-            step_features = sample[STEP_FEATURES].cpu()
-        sample[FRAME_FEATURES] = frame_features
-        sample[STEP_FEATURES] = step_features
-        sim = step_features @ frame_features.T
-        sim = sim.detach().cpu().numpy()
-        if config.drop_cost == "learn":
-            model.compute_distractors(step_features.mean(0).to(DEVICE)).detach().cpu()
-        else:
-            pass
+        prepare_sample(sample, model)
 
-        zx_costs, drop_costs, _ = compute_all_costs(
-            normal_size_features=step_features,
-            drop_side_features=frame_features,
-            gamma_xz=config.gamma_xz,
-            keep_percentile=config.keep_percentile,
-            l2_normalize=False,
-            distance=config.distance,
+        optimal_assignment, simple_assignment = get_optimal_simple_assignment(
+            model=model,
+            sample=sample,
+            config=config,
         )
-
-        zx_costs, drop_costs = map(
-            lambda x: x.detach().cpu().numpy(), [zx_costs, drop_costs]
-        )
-
-        if config.algorithm == "POW":
-            M = 1 - sample[STEP_FEATURES] @ sample[FRAME_FEATURES].T
-            # convert dtype to torch.float32
-            M = M.type(torch.DoubleTensor)
-            M, a, b = pow_cost(M=M, reg=config.reg, m=config.keep_percentile)
-            soft_assignment = ot.emd(a, b, M)
-            optimal_assignment = get_assignment(soft_assignment)
-
-        elif config.algorithm in ["DropDTW", "NW", "LCSS"]:
-            dp_fn_dict = {"DropDTW": drop_dtw, "NW": NW, "LCSS": lcss}
-            dp_fn = dp_fn_dict[config.algorithm]
-            optimal_assignment = dp_fn(zx_costs, drop_costs, return_labels=True) - 1
-        elif config.algorithm == "OTAM":
-            _, path = otam(-sim)
-            optimal_assignment = np.zeros(sim.shape[1]) - 1
-            optimal_assignment[path[1]] = path[0]
-        else:
-            _, path = dtw(-sim)
-            _, uix = np.unique(path[1], return_index=True)
-            optimal_assignment = path[0][uix]
-
-        simple_assignment = np.argmax(sim, axis=0)
-        simple_assignment[drop_costs < zx_costs.min(0)] = -1
 
         accuracy["simple"] += framewise_accuracy(
             frame_assignment=simple_assignment,
@@ -198,6 +240,7 @@ def main(args):
 
     logger.info(f"{args.algorithm} accuracy : {accuracy_dtw:.1f}%")
     logger.info(f"{args.algorithm} IoU : {iou_dtw:.1f}%")
+    return {"accuracy": accuracy_dtw, "iou": iou_dtw}
 
 
 if __name__ == "__main__":

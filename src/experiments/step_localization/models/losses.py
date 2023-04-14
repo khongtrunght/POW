@@ -1,9 +1,10 @@
 import numpy as np
 import torch
 import torch.nn.functional as F
-from dp.dp_utils import compute_all_costs
-from dp.soft_dp import batch_dropDTW, batch_NW
 from torch import exp, log
+
+from src.dp.dp_utils import compute_all_costs
+from src.dp.soft_dp import batch_dropDTW, batch_NW
 
 
 def mil_nce(

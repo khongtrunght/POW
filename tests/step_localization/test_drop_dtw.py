@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from src.experiments.step_localization.dp.dp_utils import compute_all_costs as compute_all_costs_new
+from src.dp.dp_utils import compute_all_costs as compute_all_costs_new
 import numpy as np
 
 
