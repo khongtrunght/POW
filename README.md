@@ -20,7 +20,7 @@ pre-commit install
 Example:
 
 ```bash
-python src/evaluate.py --algorithm=POW --keep_percentile 0.3 --reg 3 --use_unlabeled
+python -m src.experiments.step_localization.evaluate --algorithm=POW --keep_percentile 0.3 --reg 3 --use_unlabeled
 ```
 
 Read src/evaluate.py for more details.
