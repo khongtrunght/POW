@@ -13,7 +13,6 @@ def POT_feature_2sides(a,b,D, m=None, nb_dummies=1):
   elif m > np.min((np.sum(a), np.sum(b))):
       raise ValueError("Problem infeasible. Parameter m should lower or"
                         " equal than min(|a|_1, |b|_1).")
-  # import ipdb; ipdb.set_trace()
   b_extended = np.append(b, [(np.sum(a) - m) / nb_dummies] * nb_dummies)
   a_extended = np.append(a, [(np.sum(b) - m) / nb_dummies] * nb_dummies)
   D_extended = np.zeros((len(a_extended), len(b_extended)))

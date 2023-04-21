@@ -34,7 +34,6 @@ class BatchIdxSampler_Class:
             cls_lens.append(len(cls_idxs[-1]))
         nonempty_classes = [i for i in range(self.total_n_classes) if cls_lens[i] > 0]
 
-        # import ipdb; ipdb.set_trace()
         for _ in range(len(self)):
             batch_idxs = []
             chosen_classes = random.sample(nonempty_classes, self.n_sampled_classes)

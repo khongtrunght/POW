@@ -23,7 +23,6 @@ def drop_dtw(
         if True, returns output directly useful for segmentation computation (made for convenience)
     """
     K, N = zx_costs.shape
-
     # initialize solutin matrices
     D = np.zeros(
         [K + 1, N + 1, 2]
@@ -104,7 +103,6 @@ def drop_dtw(
         if prev_state == 1:
             x_dropped.append(xi_prev)
         zi, xi, cur_state = zi_prev, xi_prev, prev_state
-
     if not return_labels:
         return min_cost, path, x_dropped
     else:
