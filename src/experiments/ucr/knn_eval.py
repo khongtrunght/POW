@@ -3,6 +3,8 @@ import random
 
 import numpy as np
 
+import wandb
+
 np.random.seed(42)
 random.seed(42)
 sklearn_seed = 0
@@ -30,6 +32,7 @@ def parse_args():
 
 
 def main(args):
+    wandb.init(project="ucr", entity="sequence-learning", config=args)
     logger.info(f"Args: {args}")
     X_train, y_train, X_test, y_test = get_train_test_data(dataset=args.dataset)
     X_train_mean = np.mean(X_train, axis=0)
@@ -59,6 +62,8 @@ def main(args):
     accuracy = accuracy_score(y_test, y_pred)
 
     logger.info(f"Accuracy: {accuracy}")
+    wandb.run.summary["accuracy"] = accuracy
+    wandb.finish()
 
 
 if __name__ == "__main__":

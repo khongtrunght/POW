@@ -13,6 +13,13 @@ pip install -r requirements/dev.txt
 pre-commit install
 ```
 
+
+### Download datasets
+
+```bash
+python -m scripts.download_data --data all
+```
+
 # Run experiments
 
 * Step localization experiments
@@ -33,3 +40,6 @@ python -m src.experiments.weizmann.knn_eval --test_size 0.5 --outlier_ratio 0.1 
 ```
 
 Read src/experiments/weizmann/knn_eval.py for more details.
+
+
+* Note : to run softdtw follow instructions in [this repo](https://github.com/mblondel/soft-dtw)
