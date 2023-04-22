@@ -2,15 +2,9 @@ import argparse
 import random
 
 import numpy as np
-
-import wandb
-
-np.random.seed(42)
-random.seed(42)
-sklearn_seed = 0
-
 from sklearn.metrics import accuracy_score
 
+import wandb
 from config.config import logger
 from src.dp.exact_dp import drop_dtw_distance, dtw_distance
 from src.experiments.ucr.utils import get_train_test_data, random_add_noise_with_seed
@@ -27,12 +21,15 @@ def parse_args():
     parser.add_argument("--distance", type=str, default="euclidean")
     parser.add_argument("--k", type=int, default=1)
     parser.add_argument("--dataset", type=str)
+    parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     return args
 
 
 def main(args):
     wandb.init(project="ucr", entity="sequence-learning", config=args)
+    np.random.seed(args.seed)
+    random.seed(args.seed)
     logger.info(f"Args: {args}")
     X_train, y_train, X_test, y_test = get_train_test_data(dataset=args.dataset)
     X_train_mean = np.mean(X_train, axis=0)

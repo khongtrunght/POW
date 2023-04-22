@@ -16,26 +16,11 @@
 
 #!/bin/bash
 
-max_processes=8
-
-count=0
 
 for metric in drop_dtw dtw softdtw pow dtw opw; do
   for dataset in 'BME' 'BeetleFly' 'BirdChicken' 'Chinatown' 'Coffee' 'DistalPhalanxOutlineCorrect' 'DistalPhalanxTW' 'ECG200' 'FaceFour' 'Fungi' 'GunPoint' 'Herring' 'ItalyPowerDemand' 'MoteStrain' 'OliveOil' 'Plane' 'SmoothSubspace' 'SonyAIBORobotSurface1' 'SonyAIBORobotSurface2' 'ToeSegmentation2'; do
     for seed in 1 2 3 4 5; do
-        python -m src.experiments.ucr.knn_eval --outlier_ratio 0.2 --metric $metric --m 0.8 --reg 1 --distance euclidean --k 1 --dataset $dataset &
-        ((count++))
-
-        # check if maximum number of processes has been reached
-        if [[ $count -eq $max_processes ]]; then
-            # wait for some of the background processes to finish
-            wait
-
-            # reset counter
-            count=0
-        fi
+        python -m src.experiments.ucr.knn_eval --outlier_ratio 0.2 --metric $metric --m 0.8 --reg 1 --distance euclidean --k 1 --dataset $dataset
     done
   done
 done
-
-wait
