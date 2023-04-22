@@ -46,7 +46,7 @@ def main(args):
     train_size, test_size = X_train.shape[0], X_test.shape[0]
     logger.info(f"X_train shape: {X_train.shape}")
     logger.info(f"X_test shape: {X_test.shape}")
-    X_test_outlier = random_add_noise_with_seed(X_test, args.outlier_ratio, 42)
+    X_test_outlier = random_add_noise_with_seed(X_test, args.outlier_ratio, args.seed)
     logger.info("X_test_outlier shape: {}".format(X_test_outlier.shape))
     X_test = X_test_outlier
 
