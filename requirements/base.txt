@@ -9,5 +9,6 @@ tqdm==4.65.0
 lmdb==1.4.0
 scikit-learn
 rich
-gdown\
+gdown
 seaborn
+ray

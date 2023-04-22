@@ -1,5 +1,6 @@
 import numpy as np
 import ot
+import ray
 from sklearn.neighbors import KNeighborsClassifier
 from tqdm import tqdm
 
@@ -50,6 +51,8 @@ fn_dict = {
     "softdtw": soft_dtw_discrepancy,
 }
 
+fn_ray_dict = {k: ray.remote(fn_dict[k]) for k in fn_dict}
+
 
 def get_distance_matrix(X_train, X_test, args):
     train_size = len(X_train)
@@ -63,7 +66,6 @@ def get_distance_matrix(X_train, X_test, args):
             x_tr = X_train[train_idx].reshape(-1, 1)
             x_te = X_test[test_idx].reshape(-1, 1)
             M = ot.dist(x_tr, x_te, metric=args.distance)
-            M = M / M.max()
             if args.metric == "pow":
                 distance = fn_dict[args.metric](M, m=args.m, reg=args.reg)
             elif args.metric == "drop_dtw":
@@ -84,4 +86,43 @@ def get_distance_matrix(X_train, X_test, args):
             if (distance == np.inf) or np.isnan(distance):
                 distance = np.max(result)
             result[test_idx, train_idx] = distance
+    return result
+
+
+def get_distance_matrix_with_ray(X_train, X_test, args):
+    fn_dict = fn_ray_dict
+    train_size = len(X_train)
+    test_size = len(X_test)
+    logger.info(f"Train size: {train_size}")
+    logger.info(f"Test size: {test_size}")
+    ray.init()
+    # result = np.zeros((test_size, train_size))
+    result = []
+    for test_idx in tqdm(range(test_size)):
+        for train_idx in tqdm(range(train_size), leave=False):
+            x_tr = X_train[train_idx].reshape(-1, 1)
+            x_te = X_test[test_idx].reshape(-1, 1)
+            M = ot.dist(x_tr, x_te, metric=args.distance)
+            if args.metric == "pow":
+                distance = fn_dict[args.metric].remote(M, m=args.m, reg=args.reg)
+            elif args.metric == "drop_dtw":
+                distance = fn_dict[args.metric].remote(M, keep_percentile=args.m)
+            elif args.metric == "topw1":
+                distance = fn_dict[args.metric].remote(
+                    X=X_train[train_idx], Y=X_test[test_idx], metric=args.distance
+                )
+            else:
+                distance = fn_dict[args.metric].remote(M)
+            # elif args.metric == "dtw":
+            #     distance = fn_dict[args.metric](M)
+
+            # elif args.metric == "pow":
+            #     distance = fn_dict[args.metric](M)
+            # elif args.metric == "softdtw":
+            #     distance = fn_dict[args.metric](M)
+            result.append(distance)
+
+    result = ray.get(result)
+    result = np.array(result).reshape(test_size, train_size)
+    ray.shutdown()
     return result

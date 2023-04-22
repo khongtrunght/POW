@@ -9,7 +9,8 @@ from config.config import logger
 from src.dp.exact_dp import drop_dtw_distance, dtw_distance
 from src.experiments.ucr.utils import get_train_test_data, random_add_noise_with_seed
 from src.pow.pow import pow_distance
-from src.utils.knn_utils import get_distance_matrix, knn_classifier_from_distance_matrix
+from src.utils.knn_utils import get_distance_matrix_with_ray as get_distance_matrix
+from src.utils.knn_utils import knn_classifier_from_distance_matrix
 
 
 def parse_args():
