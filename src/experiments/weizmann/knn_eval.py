@@ -2,21 +2,13 @@ import argparse
 import random
 
 import numpy as np
-import ot
-
-np.random.seed(42)
-random.seed(42)
-sklearn_seed = 0
-
 from sklearn.metrics import accuracy_score
-from tqdm import tqdm
 
+import wandb
 from config.config import WEI_PATH, logger
-from src.dp.exact_dp import drop_dtw_distance, dtw_distance
 from src.experiments.weizmann.dataset import WeisDataset
 from src.experiments.weizmann.utils import add_outlier
-from src.pow.pow import pow_distance
-from src.utils.knn_utils import knn_classifier_from_distance_matrix
+from src.utils.knn_utils import get_distance_matrix, knn_classifier_from_distance_matrix
 
 
 def parse_args():
@@ -25,14 +17,19 @@ def parse_args():
     parser.add_argument("--outlier_ratio", type=float, default=0.1)
     parser.add_argument("--metric", type=str)
     parser.add_argument("--m", type=float, default=0.1)
-    parser.add_argument("--reg", type=int, default=1)
+    parser.add_argument("--reg", type=float, default=1)
     parser.add_argument("--distance", type=str, default="euclidean")
     parser.add_argument("--k", type=int, default=1)
+    parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     return args
 
 
 def main(args):
+    wandb.init(project="weizmann", entity="sequence-learning", config=args)
+
+    np.random.seed(args.seed)
+    random.seed(args.seed)
     logger.info(f"Args: {args}")
     weis_dataset = WeisDataset.from_folder(WEI_PATH, test_size=args.test_size)
     X_train = [weis_dataset.get_sequence(idx) for idx in weis_dataset.train_idx]
@@ -47,31 +44,7 @@ def main(args):
     y_train = np.array(list(y_train))
     y_test = np.array(list(y_test))
 
-    fn_dict = {
-        "pow": pow_distance,
-        "dtw": dtw_distance,
-        "drop_dtw": drop_dtw_distance,
-    }
-
-    train_size = len(X_train)
-    test_size = len(X_test)
-    X_train[0].shape[1]
-    logger.info(f"Train size: {train_size}")
-    logger.info(f"Test size: {test_size}")
-
-    result = np.zeros((test_size, train_size))
-    for train_idx in tqdm(range(train_size)):
-        for test_idx in tqdm(range(test_size), leave=False):
-            M = ot.dist(X_train[train_idx], X_test[test_idx], metric=args.distance)
-            if args.metric == "pow":
-                distance = fn_dict[args.metric](M, m=args.m, reg=args.reg)
-            elif args.metric == "drop_dtw":
-                distance = fn_dict[args.metric](M, keep_percentile=args.m)
-            else:
-                distance = fn_dict[args.metric](M)
-            if distance == np.inf:
-                distance = np.max(result)
-            result[test_idx, train_idx] = distance
+    result = get_distance_matrix(X_train, X_test, args)
 
     y_pred = knn_classifier_from_distance_matrix(
         distance_matrix=result,
@@ -81,6 +54,8 @@ def main(args):
     accuracy = accuracy_score(y_test, y_pred)
 
     logger.info(f"Accuracy: {accuracy}")
+    wandb.run.summary["accuracy"] = accuracy
+    wandb.finish()
 
 
 if __name__ == "__main__":

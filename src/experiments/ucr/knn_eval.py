@@ -2,20 +2,18 @@ import argparse
 import random
 
 import numpy as np
-import ot
 
 np.random.seed(42)
 random.seed(42)
 sklearn_seed = 0
 
 from sklearn.metrics import accuracy_score
-from tqdm import tqdm
 
 from config.config import logger
 from src.dp.exact_dp import drop_dtw_distance, dtw_distance
 from src.experiments.ucr.utils import get_train_test_data, random_add_noise_with_seed
 from src.pow.pow import pow_distance
-from src.utils.knn_utils import knn_classifier_from_distance_matrix
+from src.utils.knn_utils import get_distance_matrix, knn_classifier_from_distance_matrix
 
 
 def parse_args():
@@ -23,7 +21,7 @@ def parse_args():
     parser.add_argument("--outlier_ratio", type=float, default=0.1)
     parser.add_argument("--metric", type=str)
     parser.add_argument("--m", type=float, default=0.1)
-    parser.add_argument("--reg", type=int, default=1)
+    parser.add_argument("--reg", type=float, default=1)
     parser.add_argument("--distance", type=str, default="euclidean")
     parser.add_argument("--k", type=int, default=1)
     parser.add_argument("--dataset", type=str)
@@ -51,21 +49,7 @@ def main(args):
     logger.info("X_test_outlier shape: {}".format(X_test_outlier.shape))
     X_test = X_test_outlier
 
-    result = np.zeros((test_size, train_size))
-    for train_idx in tqdm(range(train_size)):
-        for test_idx in tqdm(range(test_size), leave=False):
-            x_tr = X_train[train_idx].reshape(-1, 1)
-            x_te = X_test[test_idx].reshape(-1, 1)
-            M = ot.dist(x_tr, x_te, metric=args.distance)
-            if args.metric == "pow":
-                distance = fn_dict[args.metric](M, m=args.m, reg=args.reg)
-            elif args.metric == "drop_dtw":
-                distance = fn_dict[args.metric](M, keep_percentile=args.m)
-            else:
-                distance = fn_dict[args.metric](M)
-            if distance == np.inf:
-                distance = np.max(result)
-            result[test_idx, train_idx] = distance
+    result = get_distance_matrix(X_train, X_test, args)
 
     y_pred = knn_classifier_from_distance_matrix(
         distance_matrix=result,

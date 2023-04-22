@@ -57,4 +57,5 @@ def get_assignment(soft_assignment):
 
 def pow_distance(M, reg, m):
     M, a, b = pow_dst_matrix_and_margin(M, reg, m)
+    # return ot.sinkhorn2(a, b, M, reg=0.01) #FIXME: hardcoded reg, numerical error
     return ot.emd2(a, b, M)

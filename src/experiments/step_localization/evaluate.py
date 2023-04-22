@@ -30,6 +30,7 @@ def align_pow(normal_size_features, drop_side_features, reg, m):
     # convert dtype to torch.float32
     M = M.type(torch.DoubleTensor)
     M, a, b = pow_dst_matrix_and_margin(M=M, reg=reg, m=m)
+    # soft_assignment = ot.sinkhorn(a, b, M, reg=0.01) #FIXME: hardcoded reg
     soft_assignment = ot.emd(a, b, M)
     optimal_assignment = get_assignment(soft_assignment)
     return optimal_assignment
