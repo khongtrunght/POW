@@ -7,9 +7,9 @@ from tqdm import tqdm
 
 from config.config import MULTI_WEI_PATH, logger
 from src.experiments.multi_features_weizmann.dataset import WeisDataset
+from src.experiments.weizmann.utils import add_outlier
 from src.pogw.pogw import partial_gromov_wasserstein
 from src.utils.knn_utils import knn_classifier_from_distance_matrix
-from src.experiments.weizmann.utils import add_outlier
 
 # np.random.seed(42)
 # random.seed(42)
@@ -19,8 +19,8 @@ from src.experiments.weizmann.utils import add_outlier
 def order_gromov_dist(x1, x2, m=None, metric="cosine", order_reg=0.1):
     C1 = ot.dist(x1, x1, metric=metric)
     C2 = ot.dist(x2, x2, metric=metric)
-    C1 = C1/C1.max()
-    C2 = C2/C2.max()
+    C1 = C1 / C1.max()
+    C2 = C2 / C2.max()
     p = ot.unif(C1.shape[0])
     q = ot.unif(C2.shape[0])
 
@@ -30,23 +30,25 @@ def order_gromov_dist(x1, x2, m=None, metric="cosine", order_reg=0.1):
 
     return dist
 
-def gromov_dist(x1, x2, metric='euclidean'):
+
+def gromov_dist(x1, x2, metric="euclidean"):
     C1 = ot.dist(x1, x1, metric=metric)
     C2 = ot.dist(x2, x2, metric=metric)
-    C1 = C1/C1.max()
-    C2 = C2/C2.max()
+    C1 = C1 / C1.max()
+    C2 = C2 / C2.max()
     p = ot.unif(C1.shape[0])
     q = ot.unif(C2.shape[0])
-    dist = ot.gromov_wasserstein2(C1, C2, p, q, 'square_loss')
+    dist = ot.gromov_wasserstein2(C1, C2, p, q, "square_loss")
     return dist
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test_size", type=float, default=0.5)
     parser.add_argument("--outlier_ratio", type=float, default=0.1)
-    parser.add_argument("--metric", type=str, default="cosine")
+    parser.add_argument("--metric", type=str, default="eucledian")
     parser.add_argument("--m", type=float, default=None)
-    parser.add_argument("--reg", type=int, default=1)
+    parser.add_argument("--reg", type=int, default=10)
     parser.add_argument("--k", type=int, default=1)
     args = parser.parse_args()
     return args
