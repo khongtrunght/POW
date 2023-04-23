@@ -46,7 +46,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test_size", type=float, default=0.5)
     parser.add_argument("--outlier_ratio", type=float, default=0.1)
-    parser.add_argument("--metric", type=str, default="eucledian")
+    parser.add_argument("--metric", type=str, default="euclidean")
     parser.add_argument("--m", type=float, default=None)
     parser.add_argument("--reg", type=int, default=10)
     parser.add_argument("--k", type=int, default=1)
