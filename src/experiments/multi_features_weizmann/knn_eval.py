@@ -114,12 +114,12 @@ def main(args):
                 )
             elif args.algo == "gdtw":
                 # convert to torch tensor
-                X_train[train_idx] = torch.from_numpy(X_train[train_idx])
-                X_test[test_idx] = torch.from_numpy(X_test[test_idx])
+                x = torch.from_numpy(X_train[train_idx])
+                y = torch.from_numpy(X_test[test_idx])
                 distance = gromov_dtw(
                     GDTW,
-                    X_train[train_idx],
-                    X_test[test_idx],
+                    x,
+                    y,
                 )
             # distance = gromov_dist(
             #     X_train[train_idx],
