@@ -2,6 +2,7 @@ import argparse
 
 import numpy as np
 import ot
+import torch
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
@@ -55,7 +56,8 @@ def gromov_dist(x1, x2, metric="euclidean"):
 
 
 def gromov_dtw(GDTW: gromov_dtw, x1, x2):
-    return GDTW.forward(x1, x2)
+    result = GDTW.forward(x1, x2)
+    return result.item()
 
 
 def parse_args():
@@ -111,6 +113,9 @@ def main(args):
                     m=args.m,
                 )
             elif args.algo == "gdtw":
+                # convert to torch tensor
+                X_train[train_idx] = torch.from_numpy(X_train[train_idx])
+                X_test[test_idx] = torch.from_numpy(X_test[test_idx])
                 distance = gromov_dtw(
                     GDTW,
                     X_train[train_idx],
