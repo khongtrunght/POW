@@ -10,13 +10,14 @@ from src.experiments.multi_features_weizmann.dataset import WeisDataset
 from src.experiments.weizmann.utils import add_outlier
 from src.pogw.pogw import partial_gromov_wasserstein
 from src.utils.knn_utils import knn_classifier_from_distance_matrix
+from src.gdtw.GDTW import gromov_dtw
 
 # np.random.seed(42)
 # random.seed(42)
 # sklearn_seed = 0
 
 
-def order_gromov_dist(x1, x2, m=None, metric="cosine", order_reg=0.1):
+def partial_order_gromov_dist(x1, x2, m=None, metric="cosine", order_reg=0.1):
     C1 = ot.dist(x1, x1, metric=metric)
     C2 = ot.dist(x2, x2, metric=metric)
     C1 = C1 / C1.max()
@@ -31,6 +32,17 @@ def order_gromov_dist(x1, x2, m=None, metric="cosine", order_reg=0.1):
     return dist
 
 
+def partial_gromov_dist(x1, x2, m=None, metric="cosine"):
+    C1 = ot.dist(x1, x1, metric=metric)
+    C2 = ot.dist(x2, x2, metric=metric)
+    C1 = C1 / C1.max()
+    C2 = C2 / C2.max()
+    p = ot.unif(C1.shape[0])
+    q = ot.unif(C2.shape[0])
+    dist = ot.partial.partial_gromov_wasserstein2(C1, C2, p, q, m=m)
+    return dist
+
+
 def gromov_dist(x1, x2, metric="euclidean"):
     C1 = ot.dist(x1, x1, metric=metric)
     C2 = ot.dist(x2, x2, metric=metric)
@@ -42,6 +54,10 @@ def gromov_dist(x1, x2, metric="euclidean"):
     return dist
 
 
+def gromov_dtw(GDTW: gromov_dtw, x1, x2):
+    return GDTW.forward(x1, x2)
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--test_size", type=float, default=0.5)
@@ -50,6 +66,7 @@ def parse_args():
     parser.add_argument("--m", type=float, default=None)
     parser.add_argument("--reg", type=int, default=10)
     parser.add_argument("--k", type=int, default=1)
+    parser.add_argument("--algo", type=str, default="pogw", choices=["pogw", "gdtw"])
     args = parser.parse_args()
     return args
 
@@ -79,20 +96,36 @@ def main(args):
     logger.info(f"Train size: {train_size}")
     logger.info(f"Test size: {test_size}")
 
+    GDTW = gromov_dtw(
+        max_iter=10, gamma=0.1, loss_only=1, dtw_approach="soft_GDTW", verbose=0
+    )
     result = np.zeros((test_size, train_size))
     for train_idx in tqdm(range(train_size)):
         for test_idx in tqdm(range(test_size), leave=False):
-            distance = order_gromov_dist(
-                X_train[train_idx],
-                X_test[test_idx],
-                metric=args.metric,
-                order_reg=args.reg,
-                m=args.m,
-            )
+            if args.algo == "pogw":
+                distance = partial_order_gromov_dist(
+                    X_train[train_idx],
+                    X_test[test_idx],
+                    metric=args.metric,
+                    order_reg=args.reg,
+                    m=args.m,
+                )
+            elif args.algo == "gdtw":
+                distance = gromov_dtw(
+                    GDTW,
+                    X_train[train_idx],
+                    X_test[test_idx],
+                )
             # distance = gromov_dist(
             #     X_train[train_idx],
             #     X_test[test_idx],
             #     metric=args.metric,
+            # )
+            # distance = partial_gromov_dist(
+            #     X_train[train_idx],
+            #     X_test[test_idx],
+            #     metric=args.metric,
+            #     m=args.m,
             # )
             result[test_idx, train_idx] = distance
 
