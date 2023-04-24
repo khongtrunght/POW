@@ -1,14 +1,5 @@
 import torch
 import torch.nn as nn
-from torch.autograd import Variable, grad, Function
-
-import math
-import numpy as np
-import matplotlib.pyplot as plt
-from numba import jit
-
-from itertools import product
-
 from .DTW import dtw, _SoftDTW
 
 

@@ -55,7 +55,7 @@ def gromov_dist(x1, x2, metric="euclidean"):
     return dist
 
 
-def gromov_dtw(GDTW: gromov_dtw, x1, x2):
+def gromov_dtw_dist(GDTW: gromov_dtw, x1, x2):
     result = GDTW.forward(x1, x2)
     return result.item()
 
@@ -116,7 +116,7 @@ def main(args):
                 # convert to torch tensor
                 x = torch.from_numpy(X_train[train_idx])
                 y = torch.from_numpy(X_test[test_idx])
-                distance = gromov_dtw(
+                distance = gromov_dtw_dist(
                     GDTW,
                     x,
                     y,
