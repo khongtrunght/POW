@@ -63,8 +63,8 @@ def get_distance_matrix(X_train, X_test, args):
     result = np.zeros((test_size, train_size))
     for train_idx in tqdm(range(train_size)):
         for test_idx in tqdm(range(test_size), leave=False):
-            x_tr = X_train[train_idx].reshape(-1, 1)
-            x_te = X_test[test_idx].reshape(-1, 1)
+            x_tr = X_train[train_idx].reshape(X_train[train_idx].shape[0], -1)
+            x_te = X_test[test_idx].reshape(X_test[test_idx].shape[0], -1)
             M = ot.dist(x_tr, x_te, metric=args.distance)
             if args.metric == "pow":
                 distance = fn_dict[args.metric](M, m=args.m, reg=args.reg)
@@ -76,15 +76,6 @@ def get_distance_matrix(X_train, X_test, args):
                 )
             else:
                 distance = fn_dict[args.metric](M)
-            # elif args.metric == "dtw":
-            #     distance = fn_dict[args.metric](M)
-
-            # elif args.metric == "pow":
-            #     distance = fn_dict[args.metric](M)
-            # elif args.metric == "softdtw":
-            #     distance = fn_dict[args.metric](M)
-            if (distance == np.inf) or np.isnan(distance):
-                distance = np.max(result)
             result[test_idx, train_idx] = distance
     return result
 
@@ -100,8 +91,8 @@ def get_distance_matrix_with_ray(X_train, X_test, args):
     result = []
     for test_idx in tqdm(range(test_size)):
         for train_idx in tqdm(range(train_size), leave=False):
-            x_tr = X_train[train_idx].reshape(-1, 1)
-            x_te = X_test[test_idx].reshape(-1, 1)
+            x_tr = X_train[train_idx].reshape(X_train[train_idx].shape[0], -1)
+            x_te = X_test[test_idx].reshape(X_test[test_idx].shape[0], -1)
             M = ot.dist(x_tr, x_te, metric=args.distance)
             if args.metric == "pow":
                 distance = fn_dict[args.metric].remote(M, m=args.m, reg=args.reg)

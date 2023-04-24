@@ -8,10 +8,8 @@ import wandb
 from config.config import WEI_PATH, logger
 from src.experiments.weizmann.dataset import WeisDataset
 from src.experiments.weizmann.utils import add_outlier
-from src.utils.knn_utils import (
-    get_distance_matrix_with_ray,
-    knn_classifier_from_distance_matrix,
-)
+from src.utils.knn_utils import get_distance_matrix_with_ray as get_distance_matrix
+from src.utils.knn_utils import knn_classifier_from_distance_matrix
 
 
 def parse_args():
@@ -47,7 +45,7 @@ def main(args):
     y_train = np.array(list(y_train))
     y_test = np.array(list(y_test))
 
-    result = get_distance_matrix_with_ray(X_train, X_test, args)
+    result = get_distance_matrix(X_train, X_test, args)
 
     y_pred = knn_classifier_from_distance_matrix(
         distance_matrix=result,

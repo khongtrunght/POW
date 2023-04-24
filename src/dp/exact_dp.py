@@ -509,7 +509,7 @@ def drop_dtw_distance(M, keep_percentile):
     # return cost, torch.repeat_interleave(drop_cost, cost.shape[1]), None
     drop_cost = np.percentile(M, keep_percentile * 100)
     noise_drop_costs = np.repeat(drop_cost, M.shape[1])
-    result = drop_dtw(M, noise_drop_costs)
+    result = drop_dtw(M, noise_drop_costs, exclusive=False, contiguous=False)
     return result[0]
 
 
