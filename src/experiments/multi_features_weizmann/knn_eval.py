@@ -91,12 +91,12 @@ def main(args):
     weis_dataset = WeisDataset.from_folder(
         MULTI_WEI_PATH, test_size=0.5, multi_feature=True
     )
-    X_train = [weis_dataset.get_sequence(idx) for idx in weis_dataset.train_idx][:10]
-    X_test = [weis_dataset.get_sequence(idx) for idx in weis_dataset.test_idx][:10]
+    X_train = [weis_dataset.get_sequence(idx) for idx in weis_dataset.train_idx]
+    X_test = [weis_dataset.get_sequence(idx) for idx in weis_dataset.test_idx]
     y_train = (weis_dataset.get_label(idx) for idx in weis_dataset.train_idx)
     y_test = (weis_dataset.get_label(idx) for idx in weis_dataset.test_idx)
-    y_train = np.array(list(y_train))[:10]
-    y_test = np.array(list(y_test))[:10]
+    y_train = np.array(list(y_train))
+    y_test = np.array(list(y_test))
 
     # Add outlier
     if args.random_outlier:
