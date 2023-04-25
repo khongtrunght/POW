@@ -1,4 +1,4 @@
-from config.config import logger, WEI_PATH, download_data_gdown, WEIDATA_URL, download_data_ucr
+from config.config import logger, WEI_PATH, download_data_gdown, WEIDATA_URL, download_data_ucr, MULTI_WEI_PATH, MULTIWEIDATA_URL
 import gdown
 import zipfile
 from pathlib import Path
@@ -16,6 +16,18 @@ def download_wei():
         WEI_PATH,
     )
 
+def download_multi_wei():
+    # check if wei data is already downloaded
+    if len(list(MULTI_WEI_PATH.glob("*"))) > 0:
+        logger.info("Wei data already downloaded")
+        return
+    logger.info("Downloading wei data")
+    download_data_gdown(
+        MULTIWEIDATA_URL,
+        MULTI_WEI_PATH,
+    )
+
+
 def download_ucr():
     download_data_ucr()
 
@@ -30,6 +42,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.data == "wei":
         download_wei()
+    elif args.data == "multi_wei":
+        download_multi_wei()
     elif args.data == "ucr":
         download_ucr()
     elif args.data == "all":
