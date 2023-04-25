@@ -62,7 +62,7 @@ class gromov_dtw(nn.Module):
 
         C = torch.sum((torch.abs(x_col - y_lin)) ** p, -1)
 
-        return C.float()
+        return C.float()**(1/2)
 
     def compute_constc(self, f1C1, f2C2, A):
         ###  Computes terms in the tensor contraction given the cost matrices and the current alignment

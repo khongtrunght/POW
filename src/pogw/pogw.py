@@ -71,12 +71,13 @@ def gwloss_partial(C1, C2, T):
     return np.sum(g * T)
 
 
-def partial_gromov_wasserstein(
+def partial_order_gromov_wasserstein(
     C1,
     C2,
     p,
     q,
-    m=None,
+    m,
+    order_reg,
     nb_dummies=1,
     G0=None,
     thres=1,
@@ -84,7 +85,6 @@ def partial_gromov_wasserstein(
     tol=1e-7,
     log=False,
     verbose=False,
-    order_reg=0,
     return_dist=False,
     ot_algo="emd",
     sinkhorn_reg=0.1,
