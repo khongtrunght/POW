@@ -25,7 +25,9 @@ class gromov_dtw(nn.Module):
         
         #Computes cost matrices C_x and C_y
         C1 = self._cost_matrix(x, x)
+        C1 = C1/C1.max()
         C2 = self._cost_matrix(y, y)
+        C2 = C2/C2.max()
 
         if self.loss_only:
                 
