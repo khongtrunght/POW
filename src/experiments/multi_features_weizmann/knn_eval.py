@@ -4,7 +4,7 @@ import json
 import numpy as np
 import ot
 import torch
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 from tqdm import tqdm
 
 from config.config import MULTI_WEI_PATH, logger
@@ -66,7 +66,7 @@ def parse_args():
     parser.add_argument("--random_outlier", action="store_true")
     parser.add_argument("--metric", type=str, default="euclidean")
     parser.add_argument("--m", type=float, default=None)
-    parser.add_argument("--reg", type=int, default=10)
+    parser.add_argument("--reg", type=float, default=10)
     parser.add_argument(
         "--algo",
         type=str,
@@ -160,8 +160,14 @@ def main(args):
             labels=y_train,
         )
         accuracy = accuracy_score(y_test, y_pred)
+        f1_macro = f1_score(y_test, y_pred, average="macro")
+        f1_micro = f1_score(y_test, y_pred, average="micro")
         logger.info(f"Accuracy with k = {k}: {accuracy}")
+        logger.info(f"F1 macro with k = {k}: {f1_macro}")
+        logger.info(f"F1 micro with k = {k}: {f1_micro}")
         evaluate[f"accuracy_{k}"] = accuracy
+        evaluate[f"f1_macro_{k}"] = f1_macro
+        evaluate[f"f1_micro_{k}"] = f1_micro
 
     logger.info("-" * 50)
     # write evaluate to file

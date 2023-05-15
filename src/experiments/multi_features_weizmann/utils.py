@@ -10,7 +10,7 @@ def add_outlier(x, outlier_ratio=None, random=False):
 
     x = x.copy()
     if random:
-        print("outlier_ratio is ignored")
+        # print("outlier_ratio is ignored")
         outlier_ratio = np.random.uniform(0, 0.2)
 
     outlier_idx = np.random.choice(
