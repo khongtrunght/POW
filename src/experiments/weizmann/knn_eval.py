@@ -39,6 +39,9 @@ def main(args):
     X_test = list(
         map(lambda x: add_outlier(x, outlier_ratio=args.outlier_ratio), X_test)
     )
+    X_train = list(
+        map(lambda x: add_outlier(x, outlier_ratio=args.outlier_ratio), X_train)
+    )
 
     y_train = (weis_dataset.get_label(idx) for idx in weis_dataset.train_idx)
     y_test = (weis_dataset.get_label(idx) for idx in weis_dataset.test_idx)

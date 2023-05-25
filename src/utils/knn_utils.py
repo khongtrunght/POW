@@ -9,7 +9,7 @@ from src.baselines.opw import opw_discrepancy
 from src.baselines.softdtw import soft_dtw_discrepancy
 from src.baselines.topw1 import t_opw1
 from src.dp.exact_dp import drop_dtw_distance, dtw_distance
-from src.pow.pow import pow_distance
+from src.pow.pow import partial_order_wasserstein
 
 
 def knn_classifier_from_distance_matrix(distance_matrix, k, labels):
@@ -43,7 +43,7 @@ def knn_classifier_from_distance_matrix(distance_matrix, k, labels):
 
 
 fn_dict = {
-    "pow": pow_distance,
+    "pow": partial_order_wasserstein,
     "dtw": dtw_distance,
     "drop_dtw": drop_dtw_distance,
     "topw1": t_opw1,
@@ -67,7 +67,7 @@ def get_distance_matrix(X_train, X_test, args):
             x_te = X_test[test_idx].reshape(X_test[test_idx].shape[0], -1)
             M = ot.dist(x_tr, x_te, metric=args.distance)
             if args.metric == "pow":
-                distance = fn_dict[args.metric](M, m=args.m, reg=args.reg)
+                distance = fn_dict[args.metric](M=M, order_reg=args.reg, m=args.m)
             elif args.metric == "drop_dtw":
                 distance = fn_dict[args.metric](M, keep_percentile=args.m)
             elif args.metric == "topw1":
@@ -95,7 +95,9 @@ def get_distance_matrix_with_ray(X_train, X_test, args):
             x_te = X_test[test_idx].reshape(X_test[test_idx].shape[0], -1)
             M = ot.dist(x_tr, x_te, metric=args.distance)
             if args.metric == "pow":
-                distance = fn_dict[args.metric].remote(M, m=args.m, reg=args.reg)
+                distance = fn_dict[args.metric].remote(
+                    M, m=args.m, order_reg=args.reg, return_dist=True
+                )
             elif args.metric == "drop_dtw":
                 distance = fn_dict[args.metric].remote(M, keep_percentile=args.m)
             elif args.metric == "topw1":

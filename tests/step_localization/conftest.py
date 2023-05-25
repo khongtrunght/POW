@@ -73,7 +73,9 @@ def sample_wrong(other_assignment):
 
 @pytest.fixture
 def M():
-    return torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=torch.float32)
+    # return torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=torch.float32)
+    # numpy
+    return np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=np.float32)
 
 @pytest.fixture
 def reg():

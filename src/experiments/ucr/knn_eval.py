@@ -8,7 +8,7 @@ import wandb
 from config.config import logger
 from src.dp.exact_dp import drop_dtw_distance, dtw_distance
 from src.experiments.ucr.utils import get_train_test_data, random_add_noise_with_seed
-from src.pow.pow import pow_distance
+from src.pow.pow import partial_order_wasserstein
 from src.utils.knn_utils import get_distance_matrix_with_ray as get_distance_matrix
 from src.utils.knn_utils import knn_classifier_from_distance_matrix
 
@@ -38,7 +38,7 @@ def main(args):
     X_train = (X_train - X_train_mean) / X_train_std
     X_test = (X_test - X_train_mean) / X_train_std
     fn_dict = {
-        "pow": pow_distance,
+        "pow": partial_order_wasserstein,
         "dtw": dtw_distance,
         "drop_dtw": drop_dtw_distance,
     }
@@ -47,8 +47,10 @@ def main(args):
     logger.info(f"X_train shape: {X_train.shape}")
     logger.info(f"X_test shape: {X_test.shape}")
     X_test_outlier = random_add_noise_with_seed(X_test, args.outlier_ratio, args.seed)
+    X_train_outlier = random_add_noise_with_seed(X_train, args.outlier_ratio, args.seed)
     logger.info("X_test_outlier shape: {}".format(X_test_outlier.shape))
     X_test = X_test_outlier
+    X_train = X_train_outlier
 
     result = get_distance_matrix(X_train, X_test, args)
 

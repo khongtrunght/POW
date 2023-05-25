@@ -165,3 +165,4 @@ Datasets/UCR
 **/test.ipynb
 notebooks/prior_distribution.ipynb
 wandb/
+weights/
