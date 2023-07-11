@@ -7,24 +7,24 @@ def test_evaluate_main_POW():
     args = Namespace(
         algorithm="POW",
         dataset="COIN",
-        distance="inner",
         drop_cost="logit",
         keep_percentile=0.3,
         name="",
         reg=3,
         use_unlabeled=True,
+        metric="cosine",
     )
 
     result = evaluate_main(args)
-    assert result['accuracy'] == pytest.approx(52.3, 0.1)
-    assert result['iou'] == pytest.approx(19.8, 0.1)
+    assert result['accuracy'] == pytest.approx(46.8, 0.1)
+    assert result['iou'] == pytest.approx(16.4, 0.1)
 
 def test_evaluate_main_DropDTW():
 
     args = Namespace(
         algorithm="DropDTW",
         dataset="COIN",
-        distance="inner",
+        metric="inner",
         drop_cost="logit",
         keep_percentile=0.3,
         name="",

@@ -38,6 +38,8 @@ class Unique_LMDB_Class_Dataset(LMDB_Class_Dataset):
         num_frames = sample["num_frames"].numpy().squeeze()
         gt_assignment = -torch.ones(num_frames, dtype=torch.int32)
         normal_to_unique = sample["normal_to_unique"].numpy().squeeze()
+        if len(normal_to_unique.shape) == 0:
+            normal_to_unique = np.expand_dims(normal_to_unique, axis=0)
         for idx, s in enumerate(normal_to_unique):
             st_ed = torch.arange(
                 sample["step_starts"][idx], sample["step_ends"][idx] + 1

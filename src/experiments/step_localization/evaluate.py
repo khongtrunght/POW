@@ -17,7 +17,11 @@ from src.experiments.step_localization.data.unique_data_module import UniqueData
 from src.experiments.step_localization.metrics import IoU, framewise_accuracy
 from src.experiments.step_localization.models.model_utils import load_last_checkpoint
 from src.experiments.step_localization.models.nets import EmbeddingsMapping
-from src.pow.pow import get_assignment, pow_dst_matrix_and_margin
+from src.pow.pow import (
+    get_assignment,
+    partial_order_wasserstein_for_step_localization,
+    step_localization,
+)
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 FRAME_FEATURES = "frame_features"
@@ -25,14 +29,34 @@ STEP_FEATURES = "unique_step_features"
 NUM_STEPS = "num_steps"
 
 
-def align_pow(normal_size_features, drop_side_features, reg, m):
-    M = 1 - normal_size_features @ drop_side_features.T
-    # convert dtype to torch.float32
-    M = M.type(torch.DoubleTensor)
-    M, a, b = pow_dst_matrix_and_margin(M=M, reg=reg, m=m)
-    soft_assignment = ot.emd(a, b, M)
+def align_pow(normal_size_features, drop_side_features, reg, m, metric):
+    # M = 1 - normal_size_features @ drop_side_features.T
+    normal_size_features = normal_size_features.detach().cpu().numpy()
+    drop_side_features = drop_side_features.detach().cpu().numpy()
+    M = ot.dist(normal_size_features, drop_side_features, metric=metric)
+    soft_assignment = partial_order_wasserstein_for_step_localization(
+        M=M,
+        order_reg=reg,
+        return_outliers=True,
+        m=m,
+    )
     optimal_assignment = get_assignment(soft_assignment)
     return optimal_assignment
+
+
+def align_pow_with_reg(normal_size_features, drop_side_features, reg1, reg2, m, metric):
+    if isinstance(normal_size_features, torch.Tensor):
+        normal_size_features = normal_size_features.detach().cpu().numpy()
+        drop_side_features = drop_side_features.detach().cpu().numpy()
+    # M = 1 - normal_size_features @ drop_side_features.T
+    M = ot.dist(normal_size_features, drop_side_features, metric=metric)
+    # def get_full_matrix(T):
+    #     drop_line = 1 / T.shape[1] - np.sum(T, axis=0)
+    #     return np.vstack([T, drop_line])
+    T = step_localization(M, order_reg=reg1, smooth_reg=reg2, m=m)
+    # T = get_full_matrix(T)
+    optimal_asignment = get_assignment(T)
+    return optimal_asignment
 
 
 def align_drop_nw_lcss(zx_costs, drop_costs, algorithm):
@@ -72,7 +96,7 @@ def get_optimal_simple_assignment(model, sample, config):
         gamma_xz=config.gamma_xz,
         keep_percentile=config.keep_percentile,
         l2_normalize=False,
-        distance=config.distance,
+        metric=config.metric,
     )
 
     zx_costs, drop_costs = map(
@@ -85,6 +109,7 @@ def get_optimal_simple_assignment(model, sample, config):
             drop_side_features=frame_features,
             reg=config.reg,
             m=config.keep_percentile,
+            metric=config.metric,
         )
 
     elif config.algorithm in ["DropDTW", "NW", "LCSS"]:
@@ -94,6 +119,15 @@ def get_optimal_simple_assignment(model, sample, config):
 
     elif config.algorithm == "OTAM":
         optimal_assignment = align_otam(sim)
+    elif config.algorithm == "POW-reg":
+        optimal_assignment = align_pow_with_reg(
+            normal_size_features=step_features,
+            drop_side_features=frame_features,
+            reg1=config.reg,
+            reg2=config.reg2,
+            m=config.keep_percentile,
+            metric=config.metric,
+        )
     else:
         optimal_assignment = align_dtw(sim)
 
@@ -105,9 +139,9 @@ def get_optimal_simple_assignment(model, sample, config):
 def prepare_sample(sample, model):
     if model is not None:
         frame_features = (
-            model.map_video(sample[FRAME_FEATURES].to(DEVICE)).detech().cpu()
+            model.map_video(sample[FRAME_FEATURES].to(DEVICE)).detach().cpu()
         )
-        step_features = model.map_video(sample[STEP_FEATURES].to(DEVICE)).detech().cpu()
+        step_features = model.map_video(sample[STEP_FEATURES].to(DEVICE)).detach().cpu()
     else:
         frame_features = sample[FRAME_FEATURES].cpu()
         step_features = sample[STEP_FEATURES].cpu()
@@ -180,12 +214,14 @@ def parse_args():
         default="",
         help="model for evaluation, if nothing is given, evaluate pretrained features",
     )
-    parser.add_argument("--distance", type=str, default="inner", help="distance type")
+    parser.add_argument(
+        "--metric", type=str, default="cosine", help="ground metric type"
+    )
     parser.add_argument(
         "--algorithm",
         type=str,
         default="DropDTW",
-        choices=["DropDTW", "OTAM", "DTW", "NW", "LCSS", "POW"],
+        choices=["DropDTW", "OTAM", "DTW", "NW", "LCSS", "POW", "POW-reg"],
         help="distance type",
     )
     parser.add_argument(
@@ -202,7 +238,8 @@ def parse_args():
         action="store_true",
         help="use unlabeled frames in comparison (useful to consider dropped steps)",
     )
-    parser.add_argument("--reg", type=float, default=0.1, help="reg")
+    parser.add_argument("--reg", type=float, default=0.1, help="reg for POW")
+    parser.add_argument("--reg2", type=float, default=0.1, help="reg2 for POW-reg")
     args = parser.parse_args()
     return args
 

@@ -32,7 +32,7 @@ def compute_all_costs(
     gamma_xz,
     keep_percentile,
     l2_normalize=False,
-    distance="inner",
+    metric="inner",
 ):
     """This function computes pairwise match and individual drop costs used in Drop-DTW
 
@@ -57,7 +57,7 @@ def compute_all_costs(
     if l2_normalize:
         frame_features = F.normalize(frame_features, p=2, dim=1)
         step_features = F.normalize(step_features, p=2, dim=1)
-    if distance == "inner":
+    if metric == "inner":
         sim = normal_size_features @ drop_side_features.T
         k = max([1, int(torch.numel(sim) * keep_percentile)])
         baseline_logit = torch.topk(sim.reshape([-1]), k).values[-1].detach()
@@ -71,11 +71,18 @@ def compute_all_costs(
         return zx_costs, drop_costs, drop_probs
     else:
         try:
-            cost = ot.dist(drop_side_features, normal_size_features, metric=distance)
+            drop_side_features1 = drop_side_features.numpy()
+            normal_size_features1 = normal_size_features.numpy()
+            cost = ot.dist(normal_size_features1, drop_side_features1, metric=metric)
         except Exception as e:
             raise e
-        drop_cost = torch.percentile(cost, keep_percentile * 100)
-        return cost, torch.repeat_interleave(drop_cost, cost.shape[1]), None
+        # drop_cost = torch.percentile(cost, keep_percentile * 100)
+        drop_cost = np.percentile(cost, keep_percentile * 100)
+        return (
+            torch.tensor(cost),
+            torch.repeat_interleave(torch.tensor(drop_cost), cost.shape[1]),
+            None,
+        )
 
 
 class VarTable:

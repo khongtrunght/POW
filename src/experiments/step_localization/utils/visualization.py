@@ -58,7 +58,7 @@ def visualize_drop_dtw_matching(
             gamma_xz=gamma_f[i],
             keep_percentile=keep_percentile,
             l2_normalize=False,
-            distance=drop_cost,
+            metric=drop_cost,
         )
         zx_costs, drop_costs = [
             t.detach().cpu().numpy() for t in [zx_costs, drop_costs]

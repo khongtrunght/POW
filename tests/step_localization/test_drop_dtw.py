@@ -90,7 +90,7 @@ def test_inner_distance(sample):
     zx_costs_them, drop_costs_them = zx_costs_them.detach().cpu().numpy(), drop_costs_them.detach().cpu().numpy()
 
 
-    zx_costs_new, drop_costs_new, drop_probs_new = compute_all_costs_new(normal_size_features=sample['unique_step_features'], drop_side_features=sample['frame_features'], gamma_xz=gamma_xz, keep_percentile=keep_percentile, l2_normalize=False, distance=distance)
+    zx_costs_new, drop_costs_new, drop_probs_new = compute_all_costs_new(normal_size_features=sample['unique_step_features'], drop_side_features=sample['frame_features'], gamma_xz=gamma_xz, keep_percentile=keep_percentile, l2_normalize=False, metric=distance)
     zx_costs_new, drop_costs_new = zx_costs_new.detach().cpu().numpy(), drop_costs_new.detach().cpu().numpy()
 
     assert zx_costs.shape == (sample['unique_step_features'].shape[0], sample['frame_features'].shape[0])

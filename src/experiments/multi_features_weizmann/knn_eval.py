@@ -9,9 +9,9 @@ from tqdm import tqdm
 from config.config import MULTI_WEI_PATH, logger
 from src.experiments.multi_features_weizmann.dataset import WeisDataset
 from src.experiments.weizmann.utils import add_outlier
+from src.gdtw.GDTW import gromov_dtw
 from src.pogw.pogw import partial_gromov_wasserstein
 from src.utils.knn_utils import knn_classifier_from_distance_matrix
-from src.gdtw.GDTW import gromov_dtw
 
 # np.random.seed(42)
 # random.seed(42)
