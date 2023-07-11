@@ -17,7 +17,7 @@ def test_evaluate_main_POW():
 
     result = evaluate_main(args)
     assert result['accuracy'] == pytest.approx(46.8, 0.1)
-    assert result['iou'] == pytest.approx(14.4, 0.1)
+    assert result['iou'] == pytest.approx(16.4, 0.1)
 
 def test_evaluate_main_DropDTW():
 

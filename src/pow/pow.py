@@ -114,6 +114,7 @@ def partial_order_wasserstein_for_step_localization(
     ot_algo="emd",
     sinkhorn_reg=0.1,
     return_outliers=True,
+    return_dist=False,
     **kwargs
 ):
     """Solves the partial optimal transport problem for step localization ( 1side extension)
@@ -159,26 +160,29 @@ def partial_order_wasserstein_for_step_localization(
             " equal than min(|a|_1, |b|_1)."
         )
 
-    dim_M_extended = (len(p) + nb_dummies, len(q))
-    p = p * m
+    dim_M_extended = (len(p) + nb_dummies, len(q) + nb_dummies)
+    q_extended = np.append(q, [(np.sum(p) - m) / nb_dummies] * nb_dummies)
     p_extended = np.append(p, [(np.sum(q) - m) / nb_dummies] * nb_dummies)
 
     M_reg = pow_regularization(M, order_reg)
 
     M_emd = np.zeros(dim_M_extended, dtype=M.dtype)
     M_emd[: len(p), : len(q)] = M_reg
-
+    M_emd[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
+    M_emd[: len(p), -nb_dummies:] = np.max(M) * 1e2
     if ot_algo == "emd":
-        T, logemd = ot.emd(p_extended, q, M_emd, log=True, **kwargs)
+        T, logemd = ot.emd(p_extended, q_extended, M_emd, log=True, **kwargs)
     elif ot_algo == "sinkhorn":
-        T = ot.sinkhorn(p_extended, q, M_emd, reg=sinkhorn_reg, log=False)
+        T = ot.sinkhorn(p_extended, q_extended, M_emd, reg=sinkhorn_reg, log=False)
 
-    if return_outliers:
-        drop_part = np.sum(T[-nb_dummies:, :], axis=0)
-        transfer_part = np.vstack((T[: len(p), :], drop_part))
+    if return_dist:
+        return np.sum(T[: len(p), : len(q)] * M)
+    elif return_outliers:
+        drop_part = np.sum(T[-nb_dummies:, : len(q)], axis=0)
+        transfer_part = np.vstack((T[: len(p), : len(q)], drop_part))
         return transfer_part
     else:
-        return T[: len(p), :]
+        return T[: len(p), : len(q)]
 
 
 def generic_conditional_gradient(
