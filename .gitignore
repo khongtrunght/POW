@@ -162,6 +162,8 @@ cython_debug/
 Datasets/COIN/lmdb
 Datasets/wei
 Datasets/UCR
+Datasets/CrossTask
+Datasets/YouCook2
 **/test.ipynb
 notebooks/prior_distribution.ipynb
 wandb/

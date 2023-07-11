@@ -12,6 +12,8 @@ import warnings
 warnings.simplefilter(action="ignore", category=FutureWarning)
 
 WEIDATA_URL = "https://drive.google.com/uc?id=1W_g3NKVirJCYms0JX7fEjXd4dhPc5w30"
+MULTIWEIDATA_URL = "https://drive.google.com/file/d/15bxa94ZMZS0ffxTFgFBsMDBnYY5UtDyM"
+DIGITMOVING_URL = ""
 UCRDATA_URL = "https://www.cs.ucr.edu/~eamonn/time_series_data_2018/UCRArchive_2018.zip"
 
 BASE_DIR = Path(__file__).parent.parent.absolute()
@@ -24,6 +26,7 @@ CT_PATH = Path(DATA_DIR, "CrossTask")
 YC_PATH = Path(DATA_DIR, "YouCook2")
 WEIGHTS_PATH = Path(BASE_DIR, "weights")
 WEI_PATH = Path(DATA_DIR, "wei")
+MULTI_WEI_PATH = Path(DATA_DIR,"wei_dataset_feature")
 UCR_PATH = Path(DATA_DIR, "UCR")
 
 LOGS_DIR.mkdir(parents=True, exist_ok=True)
