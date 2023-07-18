@@ -1,10 +1,10 @@
 # POW
 
-# For Developers
+## For Developers
 
-## Setup
+### Setup
 
-### Install dependencies
+#### Install dependencies
 
 ```bash
 python -m venv venv
@@ -14,13 +14,13 @@ pre-commit install
 ```
 
 
-### Download datasets
+#### Download datasets
 
 ```bash
 python -m scripts.download_data --data all
 ```
 
-# Run experiments
+## Run POW experiments
 
 * Step localization experiments
 
@@ -35,6 +35,7 @@ Read src/evaluate.py for more details.
 * Weizmann classification 1-nn experiments
 
 Example :
+
 ```bash
 python -m src.experiments.weizmann.knn_eval --test_size 0.5 --outlier_ratio 0.1 --metric pow  --m 0.9 --reg 1 --distance euclidean
 ```
@@ -42,4 +43,16 @@ python -m src.experiments.weizmann.knn_eval --test_size 0.5 --outlier_ratio 0.1 
 Read src/experiments/weizmann/knn_eval.py for more details.
 
 
+* UCR classification k-nn experiments
+
+Example
+
+```bash
+python -m src.experiments.ucr.knn_eval --dataset=Chinatown --outlier_ratio 0.1 --metric pow  --m 0.9 --reg 1 --distance euclidean --seed 1
+```
+
 * Note : to run softdtw follow instructions in [this repo](https://github.com/mblondel/soft-dtw)
+
+
+
+* Sample notebook for POW and POW with segment regularization in [notebook](notebooks/sample.ipynb)
