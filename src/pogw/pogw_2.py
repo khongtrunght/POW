@@ -7,10 +7,9 @@ def order_regularization(M, reg):
     rows, cols = M.shape
     for i in range(M.shape[0]):
         for j in range(M.shape[1]):
-            I[i, j] = (i / rows - j / cols) ** 2
+            I[i, j] = np.abs(i / rows - j / cols)**2
 
     return M + reg * I
-
 
 def gwgrad_partial(C1, C2, T):
     """Compute the GW gradient. Note: we can not use the trick in :ref:`[12] <references-gwgrad-partial>`
@@ -47,7 +46,6 @@ def gwgrad_partial(C1, C2, T):
     tens = constC + A
     return tens * 2
 
-
 def gwgrad_partial_2(C1, C2, T, order_reg):
     """Compute the GW gradient. Note: we can not use the trick in :ref:`[12] <references-gwgrad-partial>`
     as the marginals may not sum to 1.
@@ -76,43 +74,52 @@ def gwgrad_partial_2(C1, C2, T, order_reg):
         "Gromov-Wasserstein averaging of kernel and distance matrices."
         International Conference on Machine Learning (ICML). 2016.
     """
-    reg = order_reg
-    def return_I(n):
-        I = np.zeros((n, n))
-        for i in range(n):
-            for j in range(n):
-                I[i, j] = i**2 + j**2
-        return I / n**2
+    M = np.zeros((C1.shape[0], C1.shape[0], C2.shape[0], C2.shape[0]))
+    # print(M.shape)
+    for i in range(M.shape[0]):
+        for k in range(M.shape[1]):
+            for j in range(M.shape[2]):
+                for l in range(M.shape[3]):
+                    M[i,k,j,l] = np.abs(C1[i,k] - C2[j,l])**2 + order_reg*np.abs(i/T.shape[0] - j/T.shape[1])
     
-    def return_G(n,m):
-        G = np.zeros((n, m))
-        for i in range(n):
-            for j in range(m):
-                G[i, j] = i*j
-        return G / (n*m)
-    
-    const = sum([T[k,l]*(k)*(l) for k,l in np.ndindex(T.shape)])
-    
+    # gw_grad = np.zeros_like(T)
+    # for i in range(T.shape[0]):
+    #     for j in range(T.shape[1]):
+    #         gw_grad[i,j] = np.sum(M[i,:,j,:]*T[i,j])
 
-    cC1 = np.dot(C1**2 / 2 + reg*return_I(C1.shape[0]) / 2, np.dot(T, np.ones(C2.shape[0]).reshape(-1, 1)))
-    # _cC1 = np.dot(C1**2 / 2, np.dot(T, np.ones(C2.shape[0]).reshape(-1, 1)))
-    # print(np.all(cC1== _cC1))
-    cC2 = np.dot(np.dot(np.ones(C1.shape[0]).reshape(1, -1), T), C2**2 / 2 + reg*return_I(C2.shape[0])/2)
-    # _cC2 = np.dot(np.dot(np.ones(C1.shape[0]).reshape(1, -1), T), C2**2 / 2)
-    # print(np.all(cC2== _cC2))
-    constC = cC1 + cC2
-    A = -np.dot(C1, T).dot(C2.T)
-    tens = constC + A
-    
-    res = tens * 2 - reg*2*return_G(C1.shape[0], C2.shape[0]) - reg*2*const/(C1.shape[0]*C2.shape[0])
-
-    # assert 
-    # print(np.allclose(res, gwgrad_partial(C1, C2, T)))
-
-    return res
+    gw_grad = np.einsum('ijkl, kl -> ij', M, T)
+    # print(gw_grad.shape)
+    return gw_grad
 
 
-def gwloss_partial(C1, C2, T):
+def gwgrad_partial_3(C1, C2, T):
+    diff_squared = np.abs(C1[:, None, :, None] - C2[None, :, None, :])**2
+
+    # Perform the einsum operation to calculate gw_grad
+    gw_grad = np.einsum('ijkl,kl->ij', diff_squared, T)
+
+    return gw_grad
+
+
+def gwgrad_partial_4(C1, C2, T, order_reg):
+    diff_squared = np.abs(C1[:, None, :, None] - C2[None, :, None, :])**2
+
+    i = np.arange(C1.shape[0]).reshape(-1, 1)
+    j = np.arange(C2.shape[0]).reshape(1, -1)
+    diff = (i/i.shape[0] - j/j.shape[1])**2
+    M_2 = np.zeros((C1.shape[0], C2.shape[0],C1.shape[0], C2.shape[0]))
+    for k in range(M_2.shape[2]):
+        for l in range(M_2.shape[3]):
+            M_2[:,:,k,l] = diff
+    M = diff_squared + order_reg*M_2
+    # Perform the einsum operation to calculate gw_grad
+    gw_grad = np.einsum('ijkl,kl->ij', M, T)
+
+    return gw_grad
+
+
+
+def gwloss_partial(C1, C2, T, order_reg):
     """Compute the GW loss.
 
     Parameters
@@ -130,7 +137,9 @@ def gwloss_partial(C1, C2, T):
     -------
     GW loss
     """
-    g = gwgrad_partial(C1, C2, T) * 0.5
+    # g = gwgrad_partial(C1, C2, T) * 0.5
+    g = gwgrad_partial_4(C1, C2, T, order_reg)
+    # g = gwgrad_partial_3(C1, C2, T) + np.sum(order_regularization(T, 0.003))
     return np.sum(g * T)
 
 
@@ -280,7 +289,10 @@ def partial_order_gromov_wasserstein(
 
         Gprev = np.copy(G0)
 
-        M = gwgrad_partial_2(C1, C2, G0, order_reg)
+        # M = gwgrad_partial_2(C1, C2, G0, order_reg)
+        # M = gwgrad_partial_3(C1, C2, G0)
+        M = gwgrad_partial_4(C1, C2, G0, order_reg)
+        # M = gwgrad_partial(C1, C2, G0)
         # -----------------------
         # M = order_regularization(M, order_reg)
         # -----------------------
@@ -314,10 +326,10 @@ def partial_order_gromov_wasserstein(
                         + "\n"
                         + "-" * 31
                     )
-                print("{:5d}|{:8e}|{:8e}".format(cpt, err, gwloss_partial(C1, C2, G0)))
+                print("{:5d}|{:8e}|{:8e}".format(cpt, err, gwloss_partial(C1, C2, G0, order_reg)))
 
         deltaG = G0 - Gprev
-        a = gwloss_partial(C1, C2, deltaG)
+        a = gwloss_partial(C1, C2, deltaG, order_reg)
         b = 2 * np.sum(M * deltaG)
         if b > 0:  # due to numerical precision
             gamma = 0
@@ -335,7 +347,7 @@ def partial_order_gromov_wasserstein(
         cpt += 1
 
     if return_dist:
-        return gwloss_partial(C1, C2, G0)
+        return gwloss_partial(C1, C2, G0, order_reg)
     else:
         return G0[: len(p), : len(q)]
         # return G0

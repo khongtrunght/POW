@@ -31,7 +31,7 @@ def POGW_alignment(X, Y):
     p1 = ot.unif(C1.shape[0])
     p2 = ot.unif(C2.shape[0])
 
-    T = partial_order_gromov_wasserstein(C1,C2,p1,p2,m = None, order_reg=0.003, return_dist=False)
+    T = partial_order_gromov_wasserstein(C1,C2,p1,p2,m = 20/22, order_reg=0.003, return_dist=False)
 
     predicted_matching = soft_assigment_to_matching(T)
     return predicted_matching
@@ -83,8 +83,8 @@ def main():
 
 
             mnist_data, mnist_order = random_swap(mnist_data, mnist_order)
-            # mnist_data, mnist_order = add_outlier(mnist_data, mnist_order, n_outliers=2, norm=False)
-            # usps_data, usps_order = add_outlier(usps_data, usps_order, n_outliers=2, norm=False)
+            mnist_data, mnist_order = add_outlier(mnist_data, mnist_order, n_outliers=2, norm=False)
+            usps_data, usps_order = add_outlier(usps_data, usps_order, n_outliers=2, norm=False)
 
 
             flatten_usps_data = np.array([i.flatten() for i in usps_data])
