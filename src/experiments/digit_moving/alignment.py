@@ -31,7 +31,7 @@ def POGW_alignment(X, Y):
     p1 = ot.unif(C1.shape[0])
     p2 = ot.unif(C2.shape[0])
 
-    T = partial_order_gromov_wasserstein(C1,C2,p1,p2,m = 20/22, order_reg=0.003, return_dist=False)
+    T = partial_order_gromov_wasserstein(C1,C2,p1,p2,m = 20/22, order_reg=0.001, return_dist=False)
 
     predicted_matching = soft_assigment_to_matching(T)
     return predicted_matching
@@ -67,10 +67,10 @@ def PGW_alignment(X, Y):
     return predicted_matching
 
 
-def main():
+def cal():
     lst_acc = []
     lst_iou = []
-    print("Total pairs: ", len(glob("Datasets/mnist_moving/*")))
+    # print("Total pairs: ", len(glob("Datasets/mnist_moving/*")))
     for x in range(1,51):
         for digit in range(10):
             mnist_data = np.load(f"Datasets/mnist_moving/{x}/{digit}.npy").astype(np.float64)
@@ -94,13 +94,32 @@ def main():
             ground_truth_matching = get_ground_truth(mnist_order, usps_order)
 
 
-            predicted_matching = POGW_alignment(flatten_mnist_data, flatten_usps_data)
+            # predicted_matching = POGW_alignment(flatten_mnist_data, flatten_usps_data)
+            predicted_matching = GW_alignment(flatten_mnist_data, flatten_usps_data)
+            # predicted_matching = GDTW_alignment(flatten_mnist_data, flatten_usps_data)
             # print("Accuracy: ", accuracy(ground_truth_matching, predicted_matching))
             # print("IoU: ", iou(ground_truth_matching, predicted_matching))
             lst_acc.append(accuracy(ground_truth_matching, predicted_matching))
             lst_iou.append(iou(ground_truth_matching, predicted_matching))
 
-    print(len(lst_acc))
+    # print(len(lst_acc))
     print("Accuracy: ", sum(lst_acc)/len(lst_acc))
     print("IoU: ", sum(lst_iou)/len(lst_iou))
-main()
+
+    acc_res = sum(lst_acc)/len(lst_acc)
+    iou_res = sum(lst_iou)/len(lst_iou)
+    return acc_res, iou_res
+    # return 0,0
+
+if __name__ == "__main__":
+    lst_accs = []
+    lst_ious = []
+    for i in range(5):
+        # cal()
+        acc_res, iou_res = cal()
+        lst_accs.append(acc_res)
+        lst_ious.append(iou_res)
+     
+    print("Accuracy: ", round(sum(lst_accs)/len(lst_accs),4), "$\pm$", round(np.std(lst_accs),4))
+    print("IoU: ", round(sum(lst_ious)/len(lst_ious),4), "$\pm$", round(np.std(lst_ious),4))
+    

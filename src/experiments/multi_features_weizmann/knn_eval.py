@@ -11,6 +11,7 @@ from config.config import MULTI_WEI_PATH, logger
 from src.experiments.multi_features_weizmann.dataset import WeisDataset
 from src.experiments.multi_features_weizmann.utils import add_outlier
 from src.pogw.pogw import partial_order_gromov_wasserstein
+# from src.pogw.pogw_2 import partial_order_gromov_wasserstein
 from src.utils.knn_utils import knn_classifier_from_distance_matrix
 from src.gdtw.GDTW import gromov_dtw
 
@@ -18,8 +19,11 @@ from src.gdtw.GDTW import gromov_dtw
 def partial_order_gromov_dist(x1, x2, order_reg, m=None, metric="euclidean"):
     C1 = ot.dist(x1, x1, metric=metric)
     C2 = ot.dist(x2, x2, metric=metric)
-    C1 = C1 / C1.max()
-    C2 = C2 / C2.max()
+    # C1 = C1 / C1.max()
+    # C2 = C2 / C2.max()
+    C1 = C1 / C1.mean()
+    C2 = C2 / C2.mean()
+
     p = ot.unif(C1.shape[0])
     q = ot.unif(C2.shape[0])
 
@@ -67,6 +71,7 @@ def parse_args():
     parser.add_argument("--metric", type=str, default="euclidean")
     parser.add_argument("--m", type=float, default=None)
     parser.add_argument("--reg", type=float, default=10)
+    parser.add_argument("--without_outlier", action="store_true")
     parser.add_argument(
         "--algo",
         type=str,
@@ -99,7 +104,9 @@ def main(args):
     y_test = np.array(list(y_test))
 
     # Add outlier
-    if args.random_outlier:
+    if args.without_outlier:
+        logger.info("Without outlier")
+    elif args.random_outlier:
         logger.info("random outlier is True then outlier ratio is ignored")
         X_train = list(map(lambda x: add_outlier(x, random=True), X_train))
         X_test = list(map(lambda x: add_outlier(x, random=True), X_test))
@@ -153,7 +160,7 @@ def main(args):
                 raise ValueError(f"Unknown algo: {args.algo}")
             result[test_idx, train_idx] = distance
 
-    for k in [1, 3, 5, 7]:
+    for k in [1, 3, 5]:
         y_pred = knn_classifier_from_distance_matrix(
             distance_matrix=result,
             k=k,

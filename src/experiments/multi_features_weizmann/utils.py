@@ -5,7 +5,8 @@ def add_outlier(x, outlier_ratio=None, random=False):
     # x have shape (time, feature)
     #   random add outlier to x at random time, outlier is a random 0.5 0,1 have shape like feature
     def get_outlier(x):
-        outlier = np.random.randint(0, 2, size=x.shape[1])
+        # import ipdb; ipdb.set_trace()
+        outlier = np.random.randint(np.min(x), np.max(x), size=x.shape[1])
         return outlier
 
     x = x.copy()

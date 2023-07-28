@@ -71,6 +71,29 @@ def gwloss_partial(C1, C2, T):
     return np.sum(g * T)
 
 
+def gwloss_partial_2(C1, C2, T, order_reg):
+    """Compute the GW loss.
+
+    Parameters
+    ----------
+    C1: array of shape (n_p,n_p)
+        intra-source (P) cost matrix
+
+    C2: array of shape (n_u,n_u)
+        intra-target (U) cost matrix
+
+    T : array of shape(n_p+nb_dummies, n_u) (default: None)
+        Transport matrix
+
+    Returns
+    -------
+    GW loss
+    """
+    g = gwgrad_partial(C1, C2, T)
+    g = order_regularization(g, order_reg)
+    return np.sum(g * T)
+
+
 def partial_order_gromov_wasserstein(
     C1,
     C2,
@@ -264,6 +287,6 @@ def partial_order_gromov_wasserstein(
         cpt += 1
 
     if return_dist:
-        return gwloss_partial(C1, C2, G0)
+        return gwloss_partial_2(C1, C2, G0,order_reg)
     else:
         return G0[: len(p), : len(q)]
