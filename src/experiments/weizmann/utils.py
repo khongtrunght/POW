@@ -10,8 +10,11 @@ def add_outlier(x, outlier_ratio=0.1):
         outlier = np.random.randint(0, 2, size=x.shape[1])
         return outlier
 
+    # outlier_size = random from uniform (0, outlier_ratio)
+    outlier_size = np.random.uniform(0, outlier_ratio)
+    # outlier_size = outlier_ratio
     outlier_idx = np.random.choice(
-        range(x.shape[0]), size=int(x.shape[0] * outlier_ratio), replace=False
+        range(x.shape[0]), size=int(x.shape[0] * outlier_size), replace=False
     )
     for idx in outlier_idx:
         x[idx] = get_outlier(x)
