@@ -160,6 +160,8 @@ def partial_order_wasserstein_for_step_localization(
             " equal than min(|a|_1, |b|_1)."
         )
 
+    p = p * m
+
     dim_M_extended = (len(p) + nb_dummies, len(q) + nb_dummies)
     q_extended = np.append(q, [(np.sum(p) - m) / nb_dummies] * nb_dummies)
     p_extended = np.append(p, [(np.sum(q) - m) / nb_dummies] * nb_dummies)
@@ -169,7 +171,7 @@ def partial_order_wasserstein_for_step_localization(
     M_emd = np.zeros(dim_M_extended, dtype=M.dtype)
     M_emd[: len(p), : len(q)] = M_reg
     M_emd[-nb_dummies:, -nb_dummies:] = np.max(M) * 1e2
-    M_emd[: len(p), -nb_dummies:] = np.max(M) * 1e2
+    # M_emd[: len(p), -nb_dummies:] = np.max(M) * 1e2
     if ot_algo == "emd":
         T, logemd = ot.emd(p_extended, q_extended, M_emd, log=True, **kwargs)
     elif ot_algo == "sinkhorn":
@@ -335,6 +337,7 @@ def partial_order_wasserstein_with_reg(
         )
 
     def line_search(cost, G, deltaG, Mi, cost_G, **kwargs):
+        kwargs.pop("m")
         return line_search_armijo(cost, G, deltaG, Mi, cost_G, **kwargs)
 
     tmp = generic_conditional_gradient(
