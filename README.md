@@ -21,7 +21,7 @@ pip install -r requirements.txt
 python -m src.experiments.digit_moving.alignment
 ```
 
-* Weizmann classification knn experiments
+* Multi-feature Weizmann Classification K-NN Experiments
 
 Example :
 
@@ -36,14 +36,5 @@ python -m src.experiments.multi_features_weizmann.knn_eval \
 ```
 
 Read src/experiments/multi_features_weizmann/knn_eval.py for more details.
-
-
-* UCR classification k-nn experiments
-
-Example
-
-```bash
-python -m src.experiments.ucr.knn_eval --dataset=Chinatown --outlier_ratio 0.1 --metric pow  --m 0.9 --reg 1 --distance euclidean --seed 1
-```
 
 * Note : to run GDTW follow instructions in [this repo](https://github.com/samcohen16/Aligning-Time-Series)
