@@ -13,13 +13,15 @@ pip install -r requirements.txt
 ```
 
 
-## Run POW experiments
+## Run POGW experiments
 
 * Moving Digits Alignment Experiments
 
 ```bash
 python -m src.experiments.digit_moving.alignment
 ```
+
+Read src/experiments/digit_moving/alignment.py for more details.
 
 * Multi-feature Weizmann Classification K-NN Experiments
 
