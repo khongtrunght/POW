@@ -1,4 +1,4 @@
-# POW
+# Partial Ordered Gromov-Wasserstein
 
 ## For Developers
 
